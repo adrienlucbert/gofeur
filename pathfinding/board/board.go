@@ -17,16 +17,16 @@ func (t Tile) String() string {
 type Board [][]Tile
 
 // Width returns the board's width
-func (b *Board) Width() int {
+func (b *Board) Width() uint {
 	if b.Height() == 0 {
 		return 0
 	}
-	return len((*b)[0])
+	return uint(len((*b)[0]))
 }
 
 // Height returns the board's height
-func (b *Board) Height() int {
-	return len(*b)
+func (b *Board) Height() uint {
+	return uint(len(*b))
 }
 
 func (b *Board) String() string {
@@ -40,7 +40,7 @@ func (b *Board) String() string {
 	return s
 }
 
-// Returns the tile at given coordinates
+// At returns the tile at given coordinates
 func (b *Board) At(x int, y int) *Tile {
 	return &(*b)[y][x]
 }
@@ -48,9 +48,9 @@ func (b *Board) At(x int, y int) *Tile {
 // Contains returns whether the given position is within the board's bounds
 func (b *Board) Contains(x int, y int) bool {
 	switch {
-	case x < 0 || x > b.Width():
+	case x < 0 || x >= int(b.Width()):
 		return false
-	case y < 0 || y > b.Height():
+	case y < 0 || y >= int(b.Height()):
 		return false
 	default:
 		return true
