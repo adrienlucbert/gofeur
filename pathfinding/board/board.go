@@ -1,7 +1,7 @@
 // Package board contains types and utils related to a pathfinding board
 package board
 
-// Tile holds information useful to
+// Tile holds information useful to the pathfinding algorithm
 type Tile struct {
 	Blocked bool
 }
@@ -41,20 +41,13 @@ func (b *Board) String() string {
 }
 
 // At returns the tile at given coordinates
-func (b *Board) At(x int, y int) *Tile {
+func (b *Board) At(x uint, y uint) *Tile {
 	return &(*b)[y][x]
 }
 
-// Contains returns whether the given position is within the board's bounds
-func (b *Board) Contains(x int, y int) bool {
-	switch {
-	case x < 0 || x >= int(b.Width()):
-		return false
-	case y < 0 || y >= int(b.Height()):
-		return false
-	default:
-		return true
-	}
+// IsInBounds returns whether the given position is within the board's bounds
+func (b *Board) IsInBounds(x uint, y uint) bool {
+	return x < b.Width() && y < b.Height()
 }
 
 // New initializes a board of the given size
