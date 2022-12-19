@@ -29,11 +29,11 @@ func TestBoardAt(t *testing.T) {
 	assert.Equal(t, b.String(), "· · # \n· # · \n")
 }
 
-func TestBoardContains(t *testing.T) {
+func TestBoardIsInBounds(t *testing.T) {
 	b := New(3, 2)
-	assert.False(t, b.Contains(13, 37))
-	assert.False(t, b.Contains(3, 0))
-	assert.False(t, b.Contains(0, 2))
-	assert.True(t, b.Contains(0, 0))
-	assert.True(t, b.Contains(2, 1))
+	assert.False(t, b.IsInBounds(13, 37))
+	assert.False(t, b.IsInBounds(3, 0))
+	assert.False(t, b.IsInBounds(0, 2))
+	assert.True(t, b.IsInBounds(0, 0))
+	assert.True(t, b.IsInBounds(2, 1))
 }
