@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/adrienlucbert/gofeur/pkg"
 	"os"
 )
 
@@ -29,5 +30,9 @@ func main() {
 	defer fd.Close()
 	for f.Scan() {
 		fmt.Println(f.Text())
+	}
+	ui := ui.Start()
+	if err := ui.App.SetRoot(ui.FlexLayout, true).SetFocus(ui.FlexLayout).Run(); err != nil {
+		panic(err)
 	}
 }
