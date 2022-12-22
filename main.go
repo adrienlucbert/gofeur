@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/adrienlucbert/gofeur/pkg"
 	"os"
+	"time"
 )
 
 func getFileContent(file string) (*os.File, *bufio.Scanner) {
@@ -19,6 +20,24 @@ func getFileContent(file string) (*os.File, *bufio.Scanner) {
 	return fd, fileScanner
 }
 
+func ouptut(ui *pkg.UI) {
+	str := "Go "
+	count := 0
+	for {
+		ui.App.QueueUpdateDraw(func() {
+			time.Sleep(1 * time.Second)
+			if count%2 == 0 {
+				ui.OutputBox.SetTitle(fmt.Sprintf("%s QUOI?", str))
+			} else {
+				ui.OutputBox.SetTitle(fmt.Sprintf("%s FEUR...", str))
+			}
+			fmt.Fprintf(ui.OutputBox, "round: %d\n", count)
+		})
+		count += 1
+
+	}
+}
+
 func main() {
 	fmt.Println(os.Args)
 
@@ -31,8 +50,10 @@ func main() {
 	for f.Scan() {
 		fmt.Println(f.Text())
 	}
-	ui := ui.Start()
-	if err := ui.App.SetRoot(ui.FlexLayout, true).SetFocus(ui.FlexLayout).Run(); err != nil {
-		panic(err)
-	}
+	gofeur := pkg.Gofeur{}
+	gofeur.Init()
+
+	go ouptut(gofeur.Ui)
+
+	gofeur.Run()
 }
