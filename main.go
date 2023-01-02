@@ -47,11 +47,9 @@ func main() {
 	fd, f := getFileContent(file)
 	defer fd.Close()
 
-	pkg.ParseFile(f)
+    gofeur := pkg.ParseFile(f)
 
-	// gofeur := pkg.Gofeur{}
-
-	// gofeur.Init()
-	// go ouptut(gofeur.Ui)
-	// gofeur.Run()
+	gofeur.Init()
+	go ouptut(gofeur.Ui)
+	gofeur.Run()
 }
