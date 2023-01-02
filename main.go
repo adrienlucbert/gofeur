@@ -3,9 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/adrienlucbert/gofeur/pkg"
 	"os"
 	"time"
+
+	"github.com/adrienlucbert/gofeur/pkg"
 )
 
 func getFileContent(file string) (*os.File, *bufio.Scanner) {
@@ -24,17 +25,15 @@ func ouptut(ui *pkg.UI) {
 	str := "Go "
 	count := 0
 	for {
-		ui.App.QueueUpdateDraw(func() {
-			time.Sleep(1 * time.Second)
-			if count%2 == 0 {
-				ui.OutputBox.SetTitle(fmt.Sprintf("%s QUOI?", str))
-			} else {
-				ui.OutputBox.SetTitle(fmt.Sprintf("%s FEUR...", str))
-			}
-			fmt.Fprintf(ui.OutputBox, "round: %d\n", count)
-		})
-		count += 1
-
+		time.Sleep(4 * time.Second)
+		if count%2 == 0 {
+			ui.OutputBox.SetTitle(fmt.Sprintf("%s QUOI?", str))
+		} else {
+			ui.OutputBox.SetTitle(fmt.Sprintf("%s FEUR...", str))
+		}
+		fmt.Fprintf(ui.OutputBox, "round: %d\n", count)
+		count++
+		ui.App.Draw()
 	}
 }
 
@@ -47,13 +46,12 @@ func main() {
 	file := os.Args[1]
 	fd, f := getFileContent(file)
 	defer fd.Close()
-	for f.Scan() {
-		fmt.Println(f.Text())
-	}
-	gofeur := pkg.Gofeur{}
-	gofeur.Init()
 
-	go ouptut(gofeur.Ui)
+	pkg.ParseFile(f)
 
-	gofeur.Run()
+	// gofeur := pkg.Gofeur{}
+
+	// gofeur.Init()
+	// go ouptut(gofeur.Ui)
+	// gofeur.Run()
 }

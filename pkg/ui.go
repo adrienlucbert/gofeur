@@ -9,7 +9,7 @@ import (
 type UI struct {
 	App                  *tview.Application
 	StorageBuildingTable *tview.Table
-	InfoBox              *tview.Box
+	InfoBox              *tview.TextView
 	OutputBox            *tview.TextView
 	Layout               *tview.Flex
 	building             [][]any
@@ -33,25 +33,32 @@ func UIStart() *UI {
 			ui.building[y] = append(ui.building[y], ".")
 		}
 	}
-	// This is temporary (Wainting for the parser to be done)
-	ui.building[sb.packs[0].y][sb.packs[0].x] = sb.packs[0]
-	ui.building[sb.packs[1].y][sb.packs[1].x] = sb.packs[1]
-	ui.building[sb.transpals[0].y][sb.transpals[0].x] = sb.transpals[0]
-	ui.building[sb.transpals[1].y][sb.transpals[1].x] = sb.transpals[1]
-	ui.building[sb.truck[0].y][sb.truck[0].x] = sb.truck[0]
+	// This is only for testing purpose
+	ui.building[sb.Packs[0].Y][sb.Packs[0].X] = sb.Packs[0]
+	ui.building[sb.Packs[1].Y][sb.Packs[1].X] = sb.Packs[1]
+	ui.building[sb.Transpals[0].Y][sb.Transpals[0].X] = sb.Transpals[0]
+	ui.building[sb.Transpals[1].Y][sb.Transpals[1].X] = sb.Transpals[1]
+	ui.building[sb.Trucks[0].Y][sb.Trucks[0].X] = sb.Trucks[0]
 
-	ui.initUI(li, ly)
+	ui.initUI()
 	ui.Update(li, ly)
 	return ui
 }
 
-func (ui *UI) initUI(x, y int) {
+func (ui *UI) initUI() {
 	storageBuildingTable := tview.NewTable().
+		SetSelectable(true, true).
 		SetBorders(true)
 
-		// This will display infos of each components presents in the storageTable, such as;
-		// truck state (WAITING, GONE), transpals actions (GO, WAIT, TAKE, LEAVE) etc...
-	infoBox := tview.NewBox().
+	// This will display infos of each components presents in the storageTable, such as;
+	// truck state (WAITING, GONE), transpals actions (GO, WAIT, TAKE, LEAVE) etc...
+	infoBox := tview.NewTextView().
+		SetRegions(true).
+		SetScrollable(true).
+		SetChangedFunc(func() {
+			ui.App.Draw()
+		})
+	infoBox.
 		SetBorder(true).
 		SetTitle("Infos")
 
@@ -83,9 +90,14 @@ func (ui *UI) initUI(x, y int) {
 	ui.InfoBox = infoBox
 	ui.OutputBox = outputBox
 	ui.Layout = globalLayout
+
+	storageBuildingTable.SetSelectionChangedFunc(func(col, row int) {
+        ui.InfoBox.Clear()
+		fmt.Fprintf(ui.InfoBox, "x: %d, y: %d", col, row)
+	})
 }
 
-// don't mind  this func it will be usefull
+// Don't mind this func it will be usefull
 func (ui *UI) Update(x, y int) {
 	color := tcell.ColorWhite
 
