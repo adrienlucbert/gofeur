@@ -96,8 +96,15 @@ func (ui *UI) initUI() {
 	ui.InfoBox = infoBox
 	ui.OutputBox = outputBox
 	ui.Layout = globalLayout
+}
 
-	storageBuildingTable.SetSelectionChangedFunc(func(col, row int) {
+func (ui *UI) UpdateStorageBuildingTable(x, y int) {
+	color := tcell.ColorWhite
+
+	ui.StorageBuildingTable.SetSelectionChangedFunc(func(col, row int) {
+		if col >= x || row >= y || row < 0 || col < 0 {
+			return
+		}
 		ui.InfoBox.Clear()
 		if ui.building[col][row] == "." {
 			fmt.Fprintf(ui.InfoBox, "x: %d, y: %d", col, row)
@@ -107,11 +114,6 @@ func (ui *UI) initUI() {
 		name := va.FieldByName("Name").String()
 		fmt.Fprintf(ui.InfoBox, "Name: %s, x: %d, y: %d", name, col, row)
 	})
-}
-
-func (ui *UI) UpdateStorageBuildingTable(x, y int) {
-	color := tcell.ColorWhite
-
 	for row := 0; row < y; row++ {
 		for col := 0; col < x; col++ {
 			ui.StorageBuildingTable.SetCell(row, col,

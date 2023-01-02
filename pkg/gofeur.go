@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"reflect"
 )
 
 type COLOR uint8
@@ -32,11 +31,11 @@ type Transpals struct {
 }
 
 type Truck struct {
-	Name    string
-	X       uint
-	Y       uint
-	Weight  uint
-	R_avail uint
+	Name   string
+	X      uint
+	Y      uint
+	Weight uint
+	RAvail uint
 }
 
 func (t Truck) String() string {
@@ -73,16 +72,6 @@ type Gofeur struct {
 	Ui *UI
 	st Startup
 	sb StorageBuilding
-}
-
-func (gofeur *Gofeur) setStartup(w, l, r uint) {
-	val := reflect.ValueOf(gofeur)
-
-	if val.Field(2).IsValid() == false {
-		fmt.Println(`The startup has already been set
-        , so we will keep the previous value and this line is not evaluated`)
-		return
-	}
 }
 
 func (gofeur *Gofeur) Init() {
