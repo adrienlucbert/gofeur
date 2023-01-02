@@ -86,7 +86,7 @@ func (gofeur *Gofeur) setStartup(w, l, r uint) {
 }
 
 func (gofeur *Gofeur) Init() {
-	gofeur.Ui = UIStart()
+	gofeur.Ui = UIStart(gofeur.st, gofeur.sb)
 }
 
 func (gofeur *Gofeur) Run() {

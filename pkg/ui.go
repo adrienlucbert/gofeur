@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -15,33 +17,38 @@ type UI struct {
 	building             [][]any
 }
 
-func UIStart() *UI {
+func addElementsToBuilding[T any](elements []T, building [][]any) {
+	for _, elem := range elements {
+		va := reflect.ValueOf(&elem).Elem()
+		fieldX := va.FieldByName("X").Uint()
+		fieldY := va.FieldByName("Y").Uint()
+		building[fieldY][fieldX] = elem
+	}
+}
+
+func UIStart(st Startup, sb StorageBuilding) *UI {
 	app := tview.NewApplication()
 
 	ui := &UI{
 		App: app,
 	}
-	li := 16
-	ly := 16
 
-	ui.building = make([][]any, ly)
+	w := int(st.Width)
+	l := int(st.Length)
 
-	sb := InitStorageBuilding()
+	ui.building = make([][]any, l)
 
-	for y := 0; y < ly; y++ {
-		for i := 0; i < li; i++ {
+	for y := 0; y < l; y++ {
+		for i := 0; i < w; i++ {
 			ui.building[y] = append(ui.building[y], ".")
 		}
 	}
-	// This is only for testing purpose
-	ui.building[sb.Packs[0].Y][sb.Packs[0].X] = sb.Packs[0]
-	ui.building[sb.Packs[1].Y][sb.Packs[1].X] = sb.Packs[1]
-	ui.building[sb.Transpals[0].Y][sb.Transpals[0].X] = sb.Transpals[0]
-	ui.building[sb.Transpals[1].Y][sb.Transpals[1].X] = sb.Transpals[1]
-	ui.building[sb.Trucks[0].Y][sb.Trucks[0].X] = sb.Trucks[0]
+	addElementsToBuilding(sb.Packs, ui.building)
+	addElementsToBuilding(sb.Transpals, ui.building)
+	addElementsToBuilding(sb.Trucks, ui.building)
 
 	ui.initUI()
-	ui.Update(li, ly)
+	ui.UpdateStorageBuildingTable(w, l)
 	return ui
 }
 
@@ -62,7 +69,6 @@ func (ui *UI) initUI() {
 		SetBorder(true).
 		SetTitle("Infos")
 
-		// This will show the expected output
 	outputBox := tview.NewTextView().
 		SetRegions(true).
 		SetScrollable(true).
@@ -92,19 +98,24 @@ func (ui *UI) initUI() {
 	ui.Layout = globalLayout
 
 	storageBuildingTable.SetSelectionChangedFunc(func(col, row int) {
-        ui.InfoBox.Clear()
-		fmt.Fprintf(ui.InfoBox, "x: %d, y: %d", col, row)
+		ui.InfoBox.Clear()
+		if ui.building[col][row] == "." {
+			fmt.Fprintf(ui.InfoBox, "x: %d, y: %d", col, row)
+			return
+		}
+		va := reflect.ValueOf(ui.building[col][row])
+		name := va.FieldByName("Name").String()
+		fmt.Fprintf(ui.InfoBox, "Name: %s, x: %d, y: %d", name, col, row)
 	})
 }
 
-// Don't mind this func it will be usefull
-func (ui *UI) Update(x, y int) {
+func (ui *UI) UpdateStorageBuildingTable(x, y int) {
 	color := tcell.ColorWhite
 
 	for row := 0; row < y; row++ {
 		for col := 0; col < x; col++ {
 			ui.StorageBuildingTable.SetCell(row, col,
-				tview.NewTableCell(fmt.Sprint(ui.building[col][row])).
+				tview.NewTableCell(fmt.Sprint(ui.building[row][col])).
 					SetTextColor(color).
 					SetExpansion(1).
 					SetAlign(tview.AlignCenter))
