@@ -15,7 +15,6 @@ func getFileContent(file string) (*os.File, *bufio.Scanner) {
 		println(err)
 		panic("cannot open file")
 	}
-	fmt.Println(file)
 	fileScanner := bufio.NewScanner(fd)
 	fileScanner.Split(bufio.ScanLines)
 	return fd, fileScanner
@@ -38,8 +37,6 @@ func ouptut(ui *pkg.UI) {
 }
 
 func main() {
-	fmt.Println(os.Args)
-
 	if len(os.Args) != 2 {
 		panic("missing input file")
 	}
@@ -47,7 +44,7 @@ func main() {
 	fd, f := getFileContent(file)
 	defer fd.Close()
 
-    gofeur := pkg.ParseFile(f)
+	gofeur := pkg.ParseFile(f)
 
 	gofeur.Init()
 	go ouptut(gofeur.Ui)
