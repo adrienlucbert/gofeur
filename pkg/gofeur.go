@@ -19,12 +19,12 @@ type Startup struct {
 }
 
 type StorageBuilding struct {
-	Transpals []Transpals
+	Forklifts []Forklift
 	Packs     []Parcel
 	Trucks    []Truck
 }
 
-type Transpals struct {
+type Forklift struct {
 	Name string
 	X    uint
 	Y    uint
@@ -39,7 +39,7 @@ type Truck struct {
 }
 
 func (t Truck) String() string {
-	return fmt.Sprintf("Q")
+	return fmt.Sprintf("T")
 }
 
 type Parcel struct {
@@ -49,8 +49,8 @@ type Parcel struct {
 	Color Color
 }
 
-func (t Transpals) String() string {
-	return fmt.Sprintf("T")
+func (t Forklift) String() string {
+	return fmt.Sprintf("F")
 }
 
 func (p Parcel) String() string {

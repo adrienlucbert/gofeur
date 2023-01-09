@@ -44,7 +44,7 @@ func UIStart(st Startup, sb StorageBuilding) *UI {
 		}
 	}
 	addElementsToBuilding(sb.Packs, ui.building)
-	addElementsToBuilding(sb.Transpals, ui.building)
+	addElementsToBuilding(sb.Forklifts, ui.building)
 	addElementsToBuilding(sb.Trucks, ui.building)
 
 	ui.initUI()
