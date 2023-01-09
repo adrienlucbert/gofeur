@@ -20,11 +20,11 @@ func colorToUint8(color string) uint8 {
 	colorLower := strings.ToLower(color)
 
 	if colorLower == "green" {
-		return GREEN
+		return Green
 	} else if colorLower == "yellow" {
-		return YELLOW
+		return Yellow
 	}
-	return BLUE
+	return Blue
 }
 
 func factory[T any](elem T, args ...string) {
@@ -41,7 +41,7 @@ func factory[T any](elem T, args ...string) {
 			} else {
 				panic("Error: factory, cannot SetUint")
 			}
-		} else if fieldType == "COLOR" {
+		} else if fieldType == "Color" {
 			field.SetUint(uint64(colorToUint8(arg)))
 		} else {
 			field.SetString(arg)

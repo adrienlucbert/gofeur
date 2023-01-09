@@ -4,12 +4,12 @@ import (
 	"fmt"
 )
 
-type COLOR uint8
+type Color uint8
 
 const (
-	GREEN = iota
-	YELLOW
-	BLUE
+	Green = iota
+	Yellow
+	Blue
 )
 
 type Startup struct {
@@ -46,7 +46,7 @@ type Parcel struct {
 	Name  string
 	X     uint
 	Y     uint
-	Color COLOR
+	Color Color
 }
 
 func (t Transpals) String() string {
@@ -58,11 +58,11 @@ func (p Parcel) String() string {
 	white := "[white]"
 
 	switch p.Color {
-	case GREEN:
+	case Green:
 		str = "[green]"
-	case YELLOW:
+	case Yellow:
 		str = "[yellow]"
-	case BLUE:
+	case Blue:
 		str = "[blue]"
 	}
 	return fmt.Sprintf("%sP%s", str, white)
