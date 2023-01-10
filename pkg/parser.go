@@ -12,7 +12,7 @@ import (
 const (
 	STARTUP = iota
 	PARCEL
-	TRANSPAL
+	FORKLIFT
 	TRUCK
 )
 
@@ -34,16 +34,17 @@ func factory[T any](elem T, args ...string) {
 		field := va.Elem().Field(i)
 		fmt.Printf("\ttype %s - %d\n", field.Type().Name(), i)
 		fieldType := field.Type().Name()
-		if fieldType == "uint" {
+		switch fieldType {
+		case "uint":
 			num, err := strconv.ParseUint(arg, 10, 64)
 			if err == nil {
 				field.SetUint(num)
 			} else {
 				panic("Error: factory, cannot SetUint")
 			}
-		} else if fieldType == "Color" {
+		case "color_t":
 			field.SetUint(uint64(colorToUint8(arg)))
-		} else {
+		default:
 			field.SetString(arg)
 		}
 	}
@@ -64,10 +65,10 @@ func parseLine(index int, line string, gofeur *Gofeur) {
 		newParcel := Parcel{}
 		factory(&newParcel, splitted...)
 		gofeur.sb.Packs = append(gofeur.sb.Packs, newParcel)
-	case TRANSPAL:
-		newTranspal := Transpals{}
-		factory(&newTranspal, splitted...)
-		gofeur.sb.Transpals = append(gofeur.sb.Transpals, newTranspal)
+	case FORKLIFT:
+		newForklift := Forklift{}
+		factory(&newForklift, splitted...)
+		gofeur.sb.Forklifts = append(gofeur.sb.Forklifts, newForklift)
 	case TRUCK:
 		newTruck := Truck{}
 		factory(&newTruck, splitted...)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type Color uint8
+type color_t uint8
 
 const (
 	Green = iota
@@ -39,18 +39,18 @@ type Truck struct {
 }
 
 func (t Truck) String() string {
-	return fmt.Sprintf("T")
+	return "T"
 }
 
 type Parcel struct {
 	Name  string
 	X     uint
 	Y     uint
-	Color Color
+	Color color_t
 }
 
 func (t Forklift) String() string {
-	return fmt.Sprintf("F")
+	return "F"
 }
 
 func (p Parcel) String() string {

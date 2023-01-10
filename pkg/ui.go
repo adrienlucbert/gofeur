@@ -8,6 +8,7 @@ import (
 	"github.com/rivo/tview"
 )
 
+// UI est la struct regroupant tous les composants du TUI
 type UI struct {
 	App                  *tview.Application
 	StorageBuildingTable *tview.Table
@@ -48,7 +49,7 @@ func UIStart(st Startup, sb StorageBuilding) *UI {
 	addElementsToBuilding(sb.Trucks, ui.building)
 
 	ui.initUI()
-	ui.UpdateStorageBuildingTable(w, l)
+	ui.updateStorageBuildingTable(w, l)
 	return ui
 }
 
@@ -98,7 +99,7 @@ func (ui *UI) initUI() {
 	ui.Layout = globalLayout
 }
 
-func (ui *UI) UpdateStorageBuildingTable(x, y int) {
+func (ui *UI) updateStorageBuildingTable(x, y int) {
 	color := tcell.ColorWhite
 
 	ui.StorageBuildingTable.SetSelectionChangedFunc(func(col, row int) {
@@ -123,9 +124,9 @@ func (ui *UI) UpdateStorageBuildingTable(x, y int) {
 					SetAlign(tview.AlignCenter))
 		}
 	}
-	ui.Render()
+	ui.render()
 }
 
-func (ui *UI) Render() {
+func (ui *UI) render() {
 	ui.App.ForceDraw()
 }
