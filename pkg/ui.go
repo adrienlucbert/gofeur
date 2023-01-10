@@ -13,7 +13,8 @@ type UI struct {
 	App                  *tview.Application
 	StorageBuildingTable *tview.Table
 	InfoBox              *tview.TextView
-	OutputBox            *tview.TextView
+	OutputBox            *tview.Table
+	StateBox             *tview.TextView
 	Layout               *tview.Flex
 	building             [][]any
 }
@@ -70,21 +71,33 @@ func (ui *UI) initUI() {
 		SetBorder(true).
 		SetTitle("Infos")
 
-	outputBox := tview.NewTextView().
+	stateBox := tview.NewTextView().
 		SetRegions(true).
 		SetScrollable(true).
 		SetChangedFunc(func() {
 			ui.App.Draw()
 		})
+
+	stateBox.
+		SetBorder(true).
+		SetTitle("State")
+		// Add a mouse event handler to handle mouse events
+
+	outputBox := tview.NewTable().
+		SetFixed(1, 1).
+		SetSelectable(true, false)
+
 	outputBox.
 		SetBorder(true).
 		SetTitle("Output")
 
 	globalLayout := tview.NewFlex().
-		AddItem(outputBox, 0, 1, false).
+		AddItem(outputBox, 15, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(storageBuildingTable, 0, 2, true).
-			AddItem(infoBox, 5, 1, false), 0, 3, false)
+			AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+				AddItem(infoBox, 0, 1, false).
+				AddItem(stateBox, 0, 1, false), 0, 1, false), 0, 5, false)
 	globalLayout.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			ui.App.Stop()
@@ -96,6 +109,7 @@ func (ui *UI) initUI() {
 	ui.StorageBuildingTable = storageBuildingTable
 	ui.InfoBox = infoBox
 	ui.OutputBox = outputBox
+	ui.StateBox = stateBox
 	ui.Layout = globalLayout
 }
 
