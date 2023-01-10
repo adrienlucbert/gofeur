@@ -18,25 +18,25 @@ type Warehouse struct {
 
 type Parcel struct {
 	name string
-	Coordonate
+	Coordinate
 	weight Weight
 }
 
 type Forklift struct {
 	name string
-	Coordonate
+	Coordinate
 }
 
 type Truck struct {
 	name string
-	Coordonate
+	Coordinate
 	max_weight Weight
 	available  uint32
 }
 
 type Weight uint32
 
-type Coordonate struct {
+type Coordinate struct {
 	X Unit
 	Y Unit
 }

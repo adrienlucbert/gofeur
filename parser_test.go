@@ -44,7 +44,7 @@ func TestParseParcel(t *testing.T) {
 			input: []string{"parcel", "1", "1", "yellow"},
 			expectedOutput: Parcel{
 				name: "parcel",
-				Coordonate: Coordonate{
+				Coordinate: Coordinate{
 					X: 1,
 					Y: 1,
 				},
@@ -77,7 +77,7 @@ func TestParseForklift(t *testing.T) {
 			input: []string{"forklift", "2", "3"},
 			expectedOutput: Forklift{
 				name: "forklift",
-				Coordonate: Coordonate{
+				Coordinate: Coordinate{
 					X: 2,
 					Y: 3,
 				},
@@ -109,7 +109,7 @@ func TestParseTruck(t *testing.T) {
 			input: []string{"truck", "2", "3", "4000", "5"},
 			expectedOutput: Truck{
 				name: "truck",
-				Coordonate: Coordonate{
+				Coordinate: Coordinate{
 					X: 2,
 					Y: 3,
 				},
