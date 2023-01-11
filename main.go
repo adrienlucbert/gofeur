@@ -3,7 +3,9 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"os"
+	"time"
 
 	"github.com/adrienlucbert/gofeur/pkg"
 )
@@ -20,16 +22,30 @@ func getFileContent(file string) (*os.File, *bufio.Scanner) {
 }
 
 func main() {
-	if len(os.Args) != 2 {
+	filename := flag.String("filename", "", "Map file path")
+	flag.Parse()
+	if *filename == "" {
 		panic("missing input file")
 	}
-	file := os.Args[1]
-	fd, f := getFileContent(file)
+	fd, f := getFileContent(*filename)
 	defer fd.Close()
 
 	gofeur := pkg.ParseFile(f)
 
-	gofeur.Init()
-	go pkg.Logic(gofeur.Ui)
-	gofeur.Run()
+	layers := []pkg.Layer{}
+	for _, layer := range layers {
+		layer.Attach()
+	}
+	lastUpdateTime := time.Now()
+	for gofeur.Status == pkg.Running {
+		updateTime := time.Now()
+		elapsedTime := updateTime.Sub(lastUpdateTime)
+		lastUpdateTime = updateTime
+		for _, layer := range layers {
+			layer.Update(elapsedTime)
+		}
+	}
+	for _, layer := range layers {
+		layer.Detach()
+	}
 }
