@@ -68,22 +68,22 @@ func (p Parcel) String() string {
 	return fmt.Sprintf("%sP%s", str, white)
 }
 
+type GofeurStatus int
+
+const (
+	// Idle is Gofeur's state before it started
+	Idle GofeurStatus = iota
+	// Running is Gofeur's state before it's running
+	Running
+	// Finished is Gofeur's state when it's over and no parcel remains in the warehouse
+	Finished
+	// Unfinished is Gofeur's state when it's over but parcels remains in the warehouse
+	Unfinished
+)
+
 type Gofeur struct {
-	Ui *UI
-	st Startup
-	sb StorageBuilding
-}
-
-func (gofeur *Gofeur) Init() {
-	gofeur.Ui = UIStart(gofeur.st, gofeur.sb)
-}
-
-func (gofeur *Gofeur) Run() {
-	feurUI := gofeur.Ui
-
-	if err := feurUI.App.SetRoot(feurUI.Layout, true).
-		EnableMouse(true).
-		Run(); err != nil {
-		panic(err)
-	}
+	st     Startup
+	sb     StorageBuilding
+	Step   uint32
+	Status GofeurStatus
 }

@@ -23,6 +23,7 @@ func getFileContent(file string) (*os.File, *bufio.Scanner) {
 
 func main() {
 	filename := flag.String("filename", "", "Map file path")
+	displayUI := flag.Bool("ui", false, "Display UI")
 	flag.Parse()
 	if *filename == "" {
 		panic("missing input file")
@@ -32,7 +33,12 @@ func main() {
 
 	gofeur := pkg.ParseFile(f)
 
-	layers := []pkg.Layer{}
+	layers := []pkg.Layer{
+		&pkg.LogicLayer{Gofeur: gofeur},
+	}
+	if *displayUI {
+		layers = append(layers, &pkg.UILayer{Gofeur: gofeur})
+	}
 	for _, layer := range layers {
 		layer.Attach()
 	}
