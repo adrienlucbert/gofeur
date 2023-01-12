@@ -12,46 +12,47 @@ import (
 	"github.com/adrienlucbert/gofeur/optional"
 )
 
-type TokenKind int
-type ParserErrorKind int
+type (
+	tokenKind       int
+	parserErrorKind int
+)
 
-type TokenParser struct {
+type tokenParser struct {
 	fieldName string
-	kind      TokenKind
+	kind      tokenKind
 	value     any
 }
 
 const (
-	nonEmptyString TokenKind = iota
-	unit
-	weight
-	parcelColor
+	nonEmptyStringTokenKind tokenKind = iota
+	unitTokenKind
+	weightTokenKind
+	parcelColorTokenKind
 )
 
 const (
-	invalidTokenLength ParserErrorKind = iota
+	invalidTokenLength parserErrorKind = iota
 	invalidNumberOfTokens
 	invalidUnsignedInteger
 	invalidWeight
 )
 
-type InputError struct {
-	filename string
-	line     uint32
-	section  string
-	err      error
+type inputError struct {
+	line    uint32
+	section string
+	err     error
 }
 
-func (err InputError) Error() string {
-	var str = fmt.Sprintf("line: %d when parsing a %s", err.line, err.section)
+func (err inputError) Error() string {
+	str := fmt.Sprintf("line: %d when parsing a %s", err.line, err.section)
 
 	if err.err != nil {
-		str = str + fmt.Sprintf(": %s", err.err.Error())
+		str += fmt.Sprintf(": %s", err.err.Error())
 	}
 	return str
 }
 
-func (kind ParserErrorKind) ToString() string {
+func (kind parserErrorKind) ToString() string {
 	switch kind {
 	case invalidTokenLength:
 		return "invalid token length"
@@ -66,125 +67,139 @@ func (kind ParserErrorKind) ToString() string {
 	}
 }
 
-type ParserError interface {
+type parserError interface {
 	error
-	Kind() ParserErrorKind
+	Kind() parserErrorKind
 }
 
-type FieldTokenError struct {
+type fieldTokenError struct {
 	fieldName string
 	token     string
-	kind      ParserErrorKind
+	kind      parserErrorKind
 	err       string
 }
 
-func (err FieldTokenError) Error() string {
+func (err fieldTokenError) Error() string {
 	return fmt.Sprintf("%s for field: %s (found: '%s')", err.kind.ToString(), err.fieldName, err.token)
 }
 
-func (err FieldTokenError) Kind() ParserErrorKind {
+func (err fieldTokenError) Kind() parserErrorKind {
 	return err.kind
 }
 
-type TokenError struct {
-	kind ParserErrorKind
+type tokenError struct {
+	kind parserErrorKind
 	err  string
 }
 
-func (err TokenError) Error() string {
-	return fmt.Sprintf("%s", err.Kind().ToString())
+func (err tokenError) Error() string {
+	return err.Kind().ToString()
 }
 
-func (err TokenError) Kind() ParserErrorKind {
+func (err tokenError) Kind() parserErrorKind {
 	return err.kind
 }
 
-type parseParcelError struct {
-	kind  ParserErrorKind
-	token string
+type inputFileOpenError struct {
+	file string
+	err  error
 }
 
-func parseInputFile(file string) (Simulation, error) {
-	var handle, err = os.Open(file)
+func (err inputFileOpenError) Error() string {
+	return fmt.Sprintf("Error while trying to open '%s': %s", err.file, err.err.Error())
+}
+
+type inputFileError struct {
+	file string
+	err  error
+}
+
+func (err inputFileError) Error() string {
+	return fmt.Sprintf("Error in input file '%s': %s", err.file, err.err.Error())
+}
+
+func parseInputFile(file string) (simulation, error) {
+	handle, err := os.Open(file)
 	if err != nil {
-		return Simulation{}, err
+		return simulation{}, inputFileOpenError{err: err}
 	}
 	defer handle.Close()
 
-	simulation, err := parseFromReader(handle)
+	simul, err := parseFromReader(handle)
 	if err != nil {
-		err = fmt.Errorf("Error in input file '%s': %s", file, err.Error())
+		err = inputFileError{file: file, err: err}
 	}
-	return simulation, err
+	return simul, err
 }
 
-func parseFromReader(reader io.Reader) (Simulation, error) {
-	var scanner = bufio.NewScanner(reader)
-	var parser = struct {
-		section                       string
-		line                          uint32
-		tokens                        []string
-		may_be_parsed_by_next_section bool
-	}{section: "warehouse"}
-	var simulation = Simulation{}
-	var err ParserError
+var errInvalidLine = errors.New("invalid line")
 
-	for parser.may_be_parsed_by_next_section || scanner.Scan() {
-		if err == nil && !parser.may_be_parsed_by_next_section {
-			parser.line += 1
-			var line = scanner.Text()
+func parseFromReader(reader io.Reader) (simulation, error) {
+	scanner := bufio.NewScanner(reader)
+	parser := struct {
+		section                  string
+		line                     uint32
+		tokens                   []string
+		mayBeParsedByNextSection bool
+	}{section: "warehouse"}
+	simul := simulation{}
+	var err parserError
+
+	for parser.mayBeParsedByNextSection || scanner.Scan() {
+		if err == nil && !parser.mayBeParsedByNextSection {
+			parser.line++
+			line := scanner.Text()
 			parser.tokens = strings.Split(line, " ")
 		}
-		parser.may_be_parsed_by_next_section = false
+		parser.mayBeParsedByNextSection = false
 
 		switch parser.section {
 		case "warehouse":
-			simulation, err = parseWarehouseSection(parser.tokens)
+			simul, err = parseWarehouseSection(parser.tokens)
 
 			if err != nil {
-				return simulation, InputError{
+				return simulation{}, inputError{
 					line:    parser.line,
 					section: parser.section,
 					err:     err,
 				}
-
 			}
 			parser.section = getNextSection(parser.section).Value()
 		case "parcel":
-			var parcel = Parcel{}
+			var parcel parcel
 			parcel, err = parseParcel(parser.tokens)
 
 			if err == nil {
-				simulation.warehouse.parcels = append(simulation.warehouse.parcels, parcel)
+				simul.warehouse.parcels = append(simul.warehouse.parcels, parcel)
 			}
 		case "forklift":
-			var forklift = Forklift{}
+			var forklift forklift
 			forklift, err = parseForklift(parser.tokens)
 
 			if err == nil {
-				simulation.warehouse.forklifts = append(simulation.warehouse.forklifts, forklift)
+				simul.warehouse.forklifts = append(simul.warehouse.forklifts, forklift)
 			}
 		case "truck":
-			var truck = Truck{}
+			var truck truck
 			truck, err = parseTruck(parser.tokens)
 
 			if err == nil {
-				simulation.warehouse.trucks = append(simulation.warehouse.trucks, truck)
+				simul.warehouse.trucks = append(simul.warehouse.trucks, truck)
 			}
 		}
 
 		if err != nil {
 			if err.Kind() == invalidNumberOfTokens {
-				var next_section = getNextSection(parser.section)
+				nextSection := getNextSection(parser.section)
 
-				if next_section.HasValue() {
-					parser.section = next_section.Value()
-					parser.may_be_parsed_by_next_section = true
+				if nextSection.HasValue() {
+					parser.section = nextSection.Value()
+					parser.mayBeParsedByNextSection = true
 				} else {
-					return Simulation{}, InputError{
+					return simul, inputError{
 						line:    parser.line,
 						section: parser.section,
-						err:     errors.New("invalid line"),
+						err:     errInvalidLine,
 					}
 				}
 			} else {
@@ -194,13 +209,13 @@ func parseFromReader(reader io.Reader) (Simulation, error) {
 	}
 
 	if err != nil {
-		return simulation, InputError{
+		return simul, inputError{
 			line:    parser.line,
 			section: parser.section,
 			err:     err,
 		}
 	}
-	return simulation, err
+	return simul, err
 }
 
 func getNextSection(section string) optional.Optional[string] {
@@ -216,128 +231,128 @@ func getNextSection(section string) optional.Optional[string] {
 	}
 }
 
-func parseWarehouseSection(tokens []string) (Simulation, ParserError) {
-	var simulation = Simulation{}
-	var warehouseTokenParsers = []TokenParser{
+func parseWarehouseSection(tokens []string) (simulation, parserError) {
+	simul := simulation{}
+	warehouseTokenParsers := []tokenParser{
 		{
 			fieldName: "width",
-			kind:      unit,
-			value:     &simulation.warehouse.width,
+			kind:      unitTokenKind,
+			value:     &simul.warehouse.width,
 		},
 		{
 			fieldName: "length",
-			kind:      unit,
-			value:     &simulation.warehouse.length,
+			kind:      unitTokenKind,
+			value:     &simul.warehouse.length,
 		},
 		{
 			fieldName: "length",
-			value:     &simulation.cycle,
+			value:     &simul.cycle,
 		},
 	}
 
-	var err = parseTokens(tokens, warehouseTokenParsers)
-	return simulation, err
+	err := parseTokens(tokens, warehouseTokenParsers)
+	return simul, err
 }
 
-func parseParcel(tokens []string) (Parcel, ParserError) {
-	var parcel = Parcel{}
-	var parcelTokenParsers = []TokenParser{
+func parseParcel(tokens []string) (parcel, parserError) {
+	pkg := parcel{}
+	parcelTokenParsers := []tokenParser{
 		{
 			fieldName: "name",
-			kind:      nonEmptyString,
-			value:     &parcel.name,
+			kind:      nonEmptyStringTokenKind,
+			value:     &pkg.name,
 		},
 		{
 			fieldName: "x",
-			kind:      unit,
-			value:     &parcel.X,
+			kind:      unitTokenKind,
+			value:     &pkg.X,
 		},
 		{
 			fieldName: "y",
-			kind:      unit,
-			value:     &parcel.Y,
+			kind:      unitTokenKind,
+			value:     &pkg.Y,
 		},
 		{
 			fieldName: "weight",
-			kind:      parcelColor,
-			value:     &parcel.weight,
+			kind:      parcelColorTokenKind,
+			value:     &pkg.weight,
 		},
 	}
 
-	var err = parseTokens(tokens, parcelTokenParsers)
-	return parcel, err
+	err := parseTokens(tokens, parcelTokenParsers)
+	return pkg, err
 }
 
-func parseForklift(tokens []string) (Forklift, ParserError) {
-	var forklift = Forklift{}
-	var forkLiftTokenParsers = []TokenParser{
+func parseForklift(tokens []string) (forklift, parserError) {
+	flt := forklift{}
+	forkLiftTokenParsers := []tokenParser{
 		{
 			fieldName: "name",
-			kind:      nonEmptyString,
-			value:     &forklift.name,
+			kind:      nonEmptyStringTokenKind,
+			value:     &flt.name,
 		},
 		{
 			fieldName: "x",
-			value:     &forklift.X,
+			value:     &flt.X,
 		},
 		{
 			fieldName: "y",
-			value:     &forklift.Y,
+			value:     &flt.Y,
 		},
 	}
 
-	var err = parseTokens(tokens, forkLiftTokenParsers)
-	return forklift, err
+	err := parseTokens(tokens, forkLiftTokenParsers)
+	return flt, err
 }
 
-func parseTruck(tokens []string) (Truck, ParserError) {
-	var truck = Truck{}
-	var truckTokenParsers = []TokenParser{
+func parseTruck(tokens []string) (truck, parserError) {
+	lorry := truck{}
+	truckTokenParsers := []tokenParser{
 		{
 			fieldName: "name",
-			kind:      nonEmptyString,
-			value:     &truck.name,
+			kind:      nonEmptyStringTokenKind,
+			value:     &lorry.name,
 		},
 		{
 			fieldName: "x",
-			kind:      unit,
-			value:     &truck.X,
+			kind:      unitTokenKind,
+			value:     &lorry.X,
 		},
 		{
 			fieldName: "y",
-			kind:      unit,
-			value:     &truck.Y,
+			kind:      unitTokenKind,
+			value:     &lorry.Y,
 		},
 		{
 			fieldName: "maximum_weight",
-			kind:      weight,
-			value:     &truck.max_weight,
+			kind:      weightTokenKind,
+			value:     &lorry.maxWeight,
 		},
 		{
 			fieldName: "available",
-			value:     &truck.available,
+			value:     &lorry.available,
 		},
 	}
 
-	var err = parseTokens(tokens, truckTokenParsers)
-	return truck, err
+	err := parseTokens(tokens, truckTokenParsers)
+	return lorry, err
 }
 
-func parseTokens(tokens []string, tokenParsers []TokenParser) ParserError {
+func parseTokens(tokens []string, tokenParsers []tokenParser) parserError {
 	if len(tokens) != len(tokenParsers) {
-		return FieldTokenError{kind: invalidNumberOfTokens}
+		return fieldTokenError{kind: invalidNumberOfTokens}
 	}
 
 	for i, tokenParser := range tokenParsers {
-		var token = tokens[i]
-		var maybe_token_err = parseToken(token, tokenParser.kind, tokenParser.value)
+		token := tokens[i]
+		maybeTokenErr := parseToken(token, tokenParser.kind, tokenParser.value)
 
-		token_err, ok := maybe_token_err.(TokenError)
+		tokenErr, ok := maybeTokenErr.(tokenError)
 
 		if ok {
-			return FieldTokenError{
-				kind:      token_err.kind,
-				err:       token_err.Error(),
+			return fieldTokenError{
+				kind:      tokenErr.kind,
+				err:       tokenErr.Error(),
 				fieldName: tokenParser.fieldName,
 				token:     token,
 			}
@@ -346,7 +361,7 @@ func parseTokens(tokens []string, tokenParsers []TokenParser) ParserError {
 	return nil
 }
 
-func parseToken(token string, kind TokenKind, value any) error {
+func parseToken(token string, kind tokenKind, value any) error {
 	var err error
 
 	switch ptr := value.(type) {
@@ -354,9 +369,9 @@ func parseToken(token string, kind TokenKind, value any) error {
 		err = parseStringToken(token, kind, ptr)
 	case *uint32:
 		err = parseUint32Token(token, kind, ptr)
-	case *Unit:
+	case *gridUnit:
 		err = parseUnitToken(token, kind, ptr)
-	case *Weight:
+	case *weight:
 		err = parseWeightToken(token, kind, ptr)
 	default:
 		panic("Unreachable: Unexpected pointer type")
@@ -365,13 +380,13 @@ func parseToken(token string, kind TokenKind, value any) error {
 	return err
 }
 
-func parseStringToken(token string, kind TokenKind, ptr *string) ParserError {
+func parseStringToken(token string, kind tokenKind, ptr *string) parserError {
 	switch kind {
-	case nonEmptyString:
+	case nonEmptyStringTokenKind:
 		if len(token) > 0 {
 			*ptr = token
 		} else {
-			return TokenError{kind: invalidTokenLength, err: "is an empty string"}
+			return tokenError{kind: invalidTokenLength, err: "is an empty string"}
 		}
 	default:
 		panic("Unreachable")
@@ -379,43 +394,43 @@ func parseStringToken(token string, kind TokenKind, ptr *string) ParserError {
 	return nil
 }
 
-func parseUint32Token(token string, kind TokenKind, ptr *uint32) ParserError {
-	var value, err = parseUint32Field(token)
+func parseUint32Token(token string, _ tokenKind, ptr *uint32) parserError {
+	value, err := parseUint32Field(token)
 
 	if err == nil {
 		*ptr = value
 		return nil
 	}
-	return TokenError{kind: invalidUnsignedInteger, err: err.Error()}
+	return tokenError{kind: invalidUnsignedInteger, err: err.Error()}
 }
 
-func parseUnitToken(token string, kind TokenKind, ptr *Unit) ParserError {
+func parseUnitToken(token string, kind tokenKind, ptr *gridUnit) parserError {
 	var value uint32
-	var err = parseUint32Token(token, kind, &value)
+	err := parseUint32Token(token, kind, &value)
 
 	if err == nil {
-		*ptr = (Unit)(value)
+		*ptr = gridUnit(value)
 	}
 	return err
 }
 
-func parseWeightToken(token string, kind TokenKind, ptr *Weight) ParserError {
+func parseWeightToken(token string, kind tokenKind, ptr *weight) parserError {
 	switch kind {
-	case weight:
-		var value, err = parseUint32Field(token)
+	case weightTokenKind:
+		value, err := parseUint32Field(token)
 
 		if err == nil {
-			*ptr = (Weight)(value)
+			*ptr = weight(value)
 		} else {
-			return TokenError{kind: invalidWeight, err: err.Error()}
+			return tokenError{kind: invalidWeight, err: err.Error()}
 		}
-	case parcelColor:
-		var parcelWeight, err = parseWeight(token)
+	case parcelColorTokenKind:
+		parcelWeight, err := parseWeight(token)
 
 		if err == nil {
 			*ptr = parcelWeight
 		} else {
-			return TokenError{kind: invalidWeight, err: err.Error()}
+			return tokenError{kind: invalidWeight, err: err.Error()}
 		}
 	default:
 		panic("Unreachable: Unexpected TokenParserKind")
@@ -425,19 +440,21 @@ func parseWeightToken(token string, kind TokenKind, ptr *Weight) ParserError {
 }
 
 func parseUint32Field(token string) (uint32, error) {
-	var value, err = strconv.ParseUint(token, 10, 32)
-	return (uint32)(value), err
+	value, err := strconv.ParseUint(token, 10, 32)
+	return uint32(value), err
 }
 
-func parseWeight(maybe_color string) (Weight, error) {
-	var colors = []string{"yellow", "green", "blue"}
-	var colors_weight = []Weight{yellow, green, blue}
+var errInvalidColor = errors.New("invalid color")
+
+func parseWeight(maybeColor string) (weight, error) {
+	colors := []string{"yellow", "green", "blue"}
+	colorsWeight := []weight{yellow, green, blue}
 
 	for i, color := range colors {
-		if color == maybe_color || strings.ToUpper(color) == maybe_color {
-			return colors_weight[i], nil
+		if color == maybeColor || strings.ToUpper(color) == maybeColor {
+			return colorsWeight[i], nil
 		}
 	}
 
-	return yellow, errors.New("invalid color")
+	return yellow, errInvalidColor
 }

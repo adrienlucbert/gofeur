@@ -6,18 +6,30 @@ import (
 	"strings"
 )
 
-func verifySimulationValidity(simulation Simulation) error {
+var (
+	errAtLeastOneForklift = errors.New("Please provide at least a forklift")
+	errAtLeastOneTruck    = errors.New("Please provide at least one truck")
+)
+
+type dupPropertyError struct {
+	dupPropertiesEntities []string
+}
+
+func (err dupPropertyError) Error() string {
+	return strings.Join(err.dupPropertiesEntities, "\n")
+}
+
+func verifySimulationValidity(simulation simulation) error {
 	if len(simulation.warehouse.forklifts) == 0 {
-		return errors.New("Please provide at least a forklift")
+		return errAtLeastOneForklift
 	}
 
 	if len(simulation.warehouse.trucks) == 0 {
-		return errors.New("Please provide at least one truck")
+		return errAtLeastOneTruck
 	}
-	var entities = makeEntitiesArray(simulation)
+	entities := makeEntitiesArray(simulation)
 
-	var err = checkForOutOfWarehouseBoundEntity(entities, simulation.warehouse)
-
+	err := checkForOutOfWarehouseBoundEntity(entities, simulation.warehouse)
 	if err != nil {
 		return err
 	}
@@ -30,9 +42,9 @@ func verifySimulationValidity(simulation Simulation) error {
 	return ensureForDuplicatedEntitiyName(entities)
 }
 
-func makeEntitiesArray(simulation Simulation) []Entity {
-	var nb_entities = len(simulation.warehouse.parcels) + len(simulation.warehouse.forklifts) + len(simulation.warehouse.trucks)
-	var entities = make([]Entity, 0, nb_entities)
+func makeEntitiesArray(simulation simulation) []entity {
+	nbEntities := len(simulation.warehouse.parcels) + len(simulation.warehouse.forklifts) + len(simulation.warehouse.trucks)
+	entities := make([]entity, 0, nbEntities)
 
 	for _, parcel := range simulation.warehouse.parcels {
 		entities = append(entities, parcel)
@@ -49,32 +61,54 @@ func makeEntitiesArray(simulation Simulation) []Entity {
 	return entities
 }
 
-func checkForOutOfWarehouseBoundEntity(entities []Entity, warehouse Warehouse) error {
+type outOfBoundError struct {
+	entity entity
+}
+
+func (err outOfBoundError) Error() string {
+	return fmt.Sprintf("The %s named %s is out of bound", err.entity.Kind(), err.entity.Name())
+}
+
+func checkForOutOfWarehouseBoundEntity(entities []entity, warehouse warehouse) error {
 	for _, entity := range entities {
-		var coord = entity.Coord()
+		coord := entity.Coord()
 
 		if !(coord.X < warehouse.width && coord.Y < warehouse.width) {
-			return errors.New(fmt.Sprintf("The %s named %s is out of bound", entity.Kind(), entity.Name()))
+			return outOfBoundError{entity: entity}
 		}
 	}
 
 	return nil
 }
 
-func ensureNoStackedEntities(entities []Entity) error {
-	var err = hasEntityPropertyDup(entities, Entity.Coord)
+type stackedEntitiesError struct {
+	err error
+}
 
+func (err stackedEntitiesError) Error() string {
+	return fmt.Sprintf("Error found stacked entities:\n%s", err.err.Error())
+}
+
+func ensureNoStackedEntities(entities []entity) error {
+	err := hasEntityPropertyDup(entities, entity.Coord)
 	if err != nil {
-		return fmt.Errorf("Error found stacked entities:%w", err)
+		return stackedEntitiesError{err: err}
 	}
 	return nil
 }
 
-func ensureForDuplicatedEntitiyName(entities []Entity) error {
-	var err = hasEntityPropertyDup(entities, Entity.Name)
+type dupEntityNameError struct {
+	err error
+}
 
+func (err dupEntityNameError) Error() string {
+	return fmt.Sprintf("Error found duplicated entities name:\n%s", err.err.Error())
+}
+
+func ensureForDuplicatedEntitiyName(entities []entity) error {
+	err := hasEntityPropertyDup(entities, entity.Name)
 	if err != nil {
-		return fmt.Errorf("Error found duplicated entities name:%w", err)
+		return dupEntityNameError{err: err}
 	}
 	return nil
 }
@@ -82,15 +116,15 @@ func ensureForDuplicatedEntitiyName(entities []Entity) error {
 func hasEntityPropertyDup[T interface {
 	comparable
 	fmt.Stringer
-}](entities []Entity, propertyGettor func(Entity) T) error {
-	var board = make(map[T][]*Entity, len(entities))
+}](entities []entity, propertyGettor func(entity) T,
+) error {
+	board := make(map[T][]*entity, len(entities))
 
 	for i := range entities {
-		var entity = entities[i]
-		var property = propertyGettor(entity)
+		property := propertyGettor(entities[i])
 
 		if board[property] == nil {
-			board[property] = make([]*Entity, 0, 1)
+			board[property] = make([]*entity, 0, 1)
 		}
 		board[property] = append(board[property], &entities[i])
 	}
@@ -102,19 +136,18 @@ func hasEntityPropertyDup[T interface {
 	}
 
 	if len(board) != 0 {
-		var err string
+		err := make([]string, 0, len(board))
 		for property, entities := range board {
-			err += fmt.Sprintf("\n  %s ", property)
-			var err_entities = make([]string, 0, len(entities))
+			errEntities := make([]string, 0, len(entities))
 			for _, entity := range entities {
-				var kind = (*entity).Kind()
-				var name = (*entity).Name()
+				kind := (*entity).Kind()
+				name := (*entity).Name()
 
-				err_entities = append(err_entities, fmt.Sprintf("%s: %s", kind, name))
+				errEntities = append(errEntities, fmt.Sprintf("%s: %s", kind, name))
 			}
-			err += strings.Join(err_entities, ", ")
+			err = append(err, fmt.Sprintf("%s: %s", property, strings.Join(errEntities, ", ")))
 		}
-		return errors.New(err)
+		return dupPropertyError{dupPropertiesEntities: err}
 	}
 	return nil
 }

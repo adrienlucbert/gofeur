@@ -8,19 +8,19 @@ import (
 
 func TestVerifySimulationValidity(t *testing.T) {
 	type testCase struct {
-		input    Simulation
+		input    simulation
 		hasError bool
 	}
 
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
-			input:    Simulation{},
+			input:    simulation{},
 			hasError: true,
 		},
 		{
-			input: Simulation{
-				warehouse: Warehouse{
-					forklifts: []Forklift{
+			input: simulation{
+				warehouse: warehouse{
+					forklifts: []forklift{
 						{name: "forklift"},
 					},
 				},
@@ -28,14 +28,14 @@ func TestVerifySimulationValidity(t *testing.T) {
 			hasError: true,
 		},
 		{
-			input: Simulation{
-				warehouse: Warehouse{
+			input: simulation{
+				warehouse: warehouse{
 					width:  1,
 					length: 1,
-					forklifts: []Forklift{
-						{name: "forklift", Coordinate: Coordinate{X: 4}},
+					forklifts: []forklift{
+						{name: "forklift", coordinate: coordinate{X: 4}},
 					},
-					trucks: []Truck{
+					trucks: []truck{
 						{name: "truck"},
 					},
 				},
@@ -43,29 +43,29 @@ func TestVerifySimulationValidity(t *testing.T) {
 			hasError: true,
 		},
 		{
-			input: Simulation{
-				warehouse: Warehouse{
+			input: simulation{
+				warehouse: warehouse{
 					width:  1,
 					length: 1,
-					forklifts: []Forklift{
-						{name: "forklift", Coordinate: Coordinate{X: 0, Y: 0}},
+					forklifts: []forklift{
+						{name: "forklift", coordinate: coordinate{X: 0, Y: 0}},
 					},
-					trucks: []Truck{
-						{name: "truck", Coordinate: Coordinate{X: 0, Y: 0}},
+					trucks: []truck{
+						{name: "truck", coordinate: coordinate{X: 0, Y: 0}},
 					},
 				},
 			},
 			hasError: true,
 		},
 		{
-			input: Simulation{
-				warehouse: Warehouse{
+			input: simulation{
+				warehouse: warehouse{
 					width:  2,
 					length: 1,
-					forklifts: []Forklift{
-						{name: "entity", Coordinate: Coordinate{X: 1}},
+					forklifts: []forklift{
+						{name: "entity", coordinate: coordinate{X: 1}},
 					},
-					trucks: []Truck{
+					trucks: []truck{
 						{name: "entity"},
 					},
 				},
@@ -73,14 +73,14 @@ func TestVerifySimulationValidity(t *testing.T) {
 			hasError: true,
 		},
 		{
-			input: Simulation{
-				warehouse: Warehouse{
+			input: simulation{
+				warehouse: warehouse{
 					width:  2,
 					length: 1,
-					forklifts: []Forklift{
-						{name: "forklift", Coordinate: Coordinate{X: 1}},
+					forklifts: []forklift{
+						{name: "forklift", coordinate: coordinate{X: 1}},
 					},
-					trucks: []Truck{
+					trucks: []truck{
 						{name: "truck"},
 					},
 				},
@@ -90,7 +90,7 @@ func TestVerifySimulationValidity(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		var err = verifySimulationValidity(testCase.input)
+		err := verifySimulationValidity(testCase.input)
 
 		if testCase.hasError {
 			assert.NotNil(t, err)

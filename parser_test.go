@@ -10,11 +10,11 @@ import (
 func TestParseReader(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput Simulation
+		expectedOutput simulation
 		hasError       bool
 	}
 
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
 			input: []string{
 				"5 4 1000",
@@ -26,53 +26,53 @@ func TestParseReader(t *testing.T) {
 				"camion_b 3 4 4000 5",
 				"camion_a 2 2 4007 4",
 			},
-			expectedOutput: Simulation{
+			expectedOutput: simulation{
 				cycle: 1000,
-				warehouse: Warehouse{
+				warehouse: warehouse{
 					width:  5,
 					length: 4,
-					parcels: []Parcel{
+					parcels: []parcel{
 						{
 							name:       "colis_a_livrer",
-							Coordinate: Coordinate{X: 2, Y: 1},
+							coordinate: coordinate{X: 2, Y: 1},
 							weight:     green,
 						},
 						{
 							name:       "paquet",
-							Coordinate: Coordinate{X: 2, Y: 2},
+							coordinate: coordinate{X: 2, Y: 2},
 							weight:     blue,
 						},
 						{
 							name:       "deadpool",
-							Coordinate: Coordinate{X: 0, Y: 3},
+							coordinate: coordinate{X: 0, Y: 3},
 							weight:     yellow,
 						},
 						{
 							name: "colère_DU_dragon",
-							Coordinate: Coordinate{
+							coordinate: coordinate{
 								X: 4,
 								Y: 1,
 							},
 							weight: green,
 						},
 					},
-					forklifts: []Forklift{
+					forklifts: []forklift{
 						{
 							name:       "transpalette_1",
-							Coordinate: Coordinate{X: 0, Y: 5},
+							coordinate: coordinate{X: 0, Y: 5},
 						},
 					},
-					trucks: []Truck{
+					trucks: []truck{
 						{
 							name:       "camion_b",
-							Coordinate: Coordinate{X: 3, Y: 4},
-							max_weight: 4000,
+							coordinate: coordinate{X: 3, Y: 4},
+							maxWeight:  4000,
 							available:  5,
 						},
 						{
 							name:       "camion_a",
-							Coordinate: Coordinate{X: 2, Y: 2},
-							max_weight: 4007,
+							coordinate: coordinate{X: 2, Y: 2},
+							maxWeight:  4007,
 							available:  4,
 						},
 					},
@@ -85,21 +85,21 @@ func TestParseReader(t *testing.T) {
 				"forklift 1 10",
 				"truck 0 5 10000 60",
 			},
-			expectedOutput: Simulation{
+			expectedOutput: simulation{
 				cycle: 243,
-				warehouse: Warehouse{
+				warehouse: warehouse{
 					width: 10, length: 50,
-					forklifts: []Forklift{
+					forklifts: []forklift{
 						{
 							name:       "forklift",
-							Coordinate: Coordinate{X: 1, Y: 10},
+							coordinate: coordinate{X: 1, Y: 10},
 						},
 					},
-					trucks: []Truck{
+					trucks: []truck{
 						{
 							name:       "truck",
-							Coordinate: Coordinate{X: 0, Y: 5},
-							max_weight: 10000,
+							coordinate: coordinate{X: 0, Y: 5},
+							maxWeight:  10000,
 							available:  60,
 						},
 					},
@@ -109,14 +109,14 @@ func TestParseReader(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		var input = strings.Join(testCase.input, "\n")
-		var reader = strings.NewReader(input)
-		var simulation, err = parseFromReader(reader)
+		input := strings.Join(testCase.input, "\n")
+		reader := strings.NewReader(input)
+		simul, err := parseFromReader(reader)
 
 		if testCase.hasError {
 			assert.NotNil(t, err)
 		} else {
-			assert.Equal(t, simulation, testCase.expectedOutput)
+			assert.Equal(t, simul, testCase.expectedOutput)
 		}
 	}
 }
@@ -124,12 +124,12 @@ func TestParseReader(t *testing.T) {
 func TestParseWarehouseSection(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput Simulation
+		expectedOutput simulation
 		hasError       bool
-		errorKind      ParserErrorKind
+		errorKind      parserErrorKind
 	}
 
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
 			input:     []string{""},
 			hasError:  true,
@@ -153,9 +153,9 @@ func TestParseWarehouseSection(t *testing.T) {
 		{
 			input:    []string{"453", "4952", "34"},
 			hasError: false,
-			expectedOutput: Simulation{
+			expectedOutput: simulation{
 				cycle: 34,
-				warehouse: Warehouse{
+				warehouse: warehouse{
 					width:  453,
 					length: 4952,
 				},
@@ -164,12 +164,12 @@ func TestParseWarehouseSection(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		var simulation, err = parseWarehouseSection(testCase.input)
+		simul, err := parseWarehouseSection(testCase.input)
 
 		if testCase.hasError {
 			assert.Equal(t, err.Kind(), testCase.errorKind)
 		} else {
-			assert.Equal(t, simulation, testCase.expectedOutput)
+			assert.Equal(t, simul, testCase.expectedOutput)
 		}
 	}
 }
@@ -177,12 +177,12 @@ func TestParseWarehouseSection(t *testing.T) {
 func TestParseParcel(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput Parcel
+		expectedOutput parcel
 		hasError       bool
-		errorKind      ParserErrorKind
+		errorKind      parserErrorKind
 	}
 
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
 			input:     []string{""},
 			hasError:  true,
@@ -210,9 +210,9 @@ func TestParseParcel(t *testing.T) {
 		},
 		{
 			input: []string{"parcel", "1", "1", "yellow"},
-			expectedOutput: Parcel{
+			expectedOutput: parcel{
 				name: "parcel",
-				Coordinate: Coordinate{
+				coordinate: coordinate{
 					X: 1,
 					Y: 1,
 				},
@@ -222,7 +222,7 @@ func TestParseParcel(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		var parcel, err = parseParcel(testCase.input)
+		parcel, err := parseParcel(testCase.input)
 
 		if testCase.hasError {
 			assert.Equal(t, err.Kind(), testCase.errorKind)
@@ -235,17 +235,17 @@ func TestParseParcel(t *testing.T) {
 func TestParseForklift(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput Forklift
+		expectedOutput forklift
 		hasError       bool
-		errorKind      ParserErrorKind
+		errorKind      parserErrorKind
 	}
 
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
 			input: []string{"forklift", "2", "3"},
-			expectedOutput: Forklift{
+			expectedOutput: forklift{
 				name: "forklift",
-				Coordinate: Coordinate{
+				coordinate: coordinate{
 					X: 2,
 					Y: 3,
 				},
@@ -254,12 +254,12 @@ func TestParseForklift(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		var forklift, err = parseForklift(testCase.input)
+		flt, err := parseForklift(testCase.input)
 
 		if testCase.hasError {
 			assert.Equal(t, err.Kind(), testCase.errorKind)
 		} else {
-			assert.Equal(t, forklift, testCase.expectedOutput)
+			assert.Equal(t, flt, testCase.expectedOutput)
 		}
 	}
 }
@@ -267,33 +267,33 @@ func TestParseForklift(t *testing.T) {
 func TestParseTruck(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput Truck
+		expectedOutput truck
 		hasError       bool
-		errorKind      ParserErrorKind
+		errorKind      parserErrorKind
 	}
 
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
 			input: []string{"truck", "2", "3", "4000", "5"},
-			expectedOutput: Truck{
+			expectedOutput: truck{
 				name: "truck",
-				Coordinate: Coordinate{
+				coordinate: coordinate{
 					X: 2,
 					Y: 3,
 				},
-				max_weight: 4000,
-				available:  5,
+				maxWeight: 4000,
+				available: 5,
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
-		var truck, err = parseTruck(testCase.input)
+		lorry, err := parseTruck(testCase.input)
 
 		if testCase.hasError {
 			assert.Equal(t, err.Kind(), testCase.errorKind)
 		} else {
-			assert.Equal(t, truck, testCase.expectedOutput)
+			assert.Equal(t, lorry, testCase.expectedOutput)
 		}
 	}
 }
@@ -301,11 +301,11 @@ func TestParseTruck(t *testing.T) {
 func TestParseWeight(t *testing.T) {
 	type testCase struct {
 		input          string
-		expectedOutput Weight
+		expectedOutput weight
 		hasError       bool
 	}
 
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
 			input:          "yellow",
 			expectedOutput: yellow,
@@ -325,7 +325,7 @@ func TestParseWeight(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		var nb, err = parseWeight(testCase.input)
+		nb, err := parseWeight(testCase.input)
 
 		if testCase.hasError {
 			assert.NotNil(t, err)
@@ -343,7 +343,7 @@ func TestParseNumericField(t *testing.T) {
 		fieldName      string
 	}
 
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
 			input:          "2355",
 			expectedOutput: 2355,
@@ -356,7 +356,7 @@ func TestParseNumericField(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		var nb, err = parseUint32Field(testCase.input)
+		nb, err := parseUint32Field(testCase.input)
 
 		if testCase.hasError {
 			assert.NotNil(t, err)

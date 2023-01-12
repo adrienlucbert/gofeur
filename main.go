@@ -1,3 +1,4 @@
+// .
 package main
 
 import (
@@ -13,20 +14,21 @@ func main() {
 		}
 	}()
 
-	var error = runGogeur()
-
-	if error != nil {
-		println("😱 :", error.Error())
+	err := runGogeur()
+	if err != nil {
+		println("😱 :", err.Error())
 	}
 }
 
+var errNoInputFileProvided = errors.New("No input file provided")
+
 func runGogeur() error {
 	if len(os.Args) != 2 {
-		return errors.New("No input file provided")
+		return errNoInputFileProvided
 	}
 
-	var input_filepath = os.Args[1]
-	var simulation, err = parseInputFile(input_filepath)
+	inputFilepath := os.Args[1]
+	simulation, err := parseInputFile(inputFilepath)
 	if err != nil {
 		return err
 	}

@@ -2,101 +2,101 @@ package main
 
 import "fmt"
 
-type Unit uint32
+type gridUnit uint32
 
-type Simulation struct {
+type simulation struct {
 	cycle     uint32
-	warehouse Warehouse
+	warehouse warehouse
 }
 
 type stringer string
 
 func (s stringer) String() string {
-	return (string)(s)
+	return string(s)
 }
 
-type Entity interface {
+type entity interface {
 	Name() stringer
 	Kind() string
-	Coord() Coordinate
+	Coord() coordinate
 }
 
-type Warehouse struct {
-	length Unit
-	width  Unit
+type warehouse struct {
+	length gridUnit
+	width  gridUnit
 
-	parcels   []Parcel
-	forklifts []Forklift
-	trucks    []Truck
+	parcels   []parcel
+	forklifts []forklift
+	trucks    []truck
 }
 
-type Parcel struct {
+type parcel struct {
 	name string
-	Coordinate
-	weight Weight
+	coordinate
+	weight weight
 }
 
-func (parcel Parcel) Name() stringer {
-	return (stringer)(parcel.name)
+func (parcel parcel) Name() stringer {
+	return stringer(parcel.name)
 }
 
-func (parcel Parcel) Kind() string {
+func (parcel parcel) Kind() string {
 	return "parcel"
 }
 
-func (parcel Parcel) Coord() Coordinate {
-	return parcel.Coordinate
+func (parcel parcel) Coord() coordinate {
+	return parcel.coordinate
 }
 
-type Forklift struct {
+type forklift struct {
 	name string
-	Coordinate
+	coordinate
 }
 
-func (forklift Forklift) Name() stringer {
-	return (stringer)(forklift.name)
+func (forklift forklift) Name() stringer {
+	return stringer(forklift.name)
 }
 
-func (forklift Forklift) Kind() string {
+func (forklift forklift) Kind() string {
 	return "forklift"
 }
 
-func (forklift Forklift) Coord() Coordinate {
-	return forklift.Coordinate
+func (forklift forklift) Coord() coordinate {
+	return forklift.coordinate
 }
 
-type Truck struct {
+type truck struct {
 	name string
-	Coordinate
-	max_weight Weight
-	available  uint32
+	coordinate
+	maxWeight weight
+	available uint32
 }
 
-func (truck Truck) Name() stringer {
-	return (stringer)(truck.name)
+func (truck truck) Name() stringer {
+	return stringer(truck.name)
 }
 
-func (truck Truck) Kind() string {
+func (truck truck) Kind() string {
 	return "truck"
 }
 
-func (truck Truck) Coord() Coordinate {
-	return truck.Coordinate
+func (truck truck) Coord() coordinate {
+	return truck.coordinate
 }
 
-type Weight uint32
+type weight uint32
 
-type Coordinate struct {
-	X Unit
-	Y Unit
+type coordinate struct {
+	X gridUnit
+	Y gridUnit
 }
 
-func (coord Coordinate) String() string {
+func (coord coordinate) String() string {
 	return fmt.Sprintf("(x: %d, y: %d)", coord.X, coord.Y)
 }
 
 const (
-	yellow Weight = 100
-	green  Weight = 200
-	blue   Weight = 500
+	yellow weight = 100
+	green  weight = 200
+	blue   weight = 500
 )
