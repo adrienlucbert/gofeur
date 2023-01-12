@@ -3,47 +3,26 @@ package pathfinding
 
 import (
 	"errors"
-	"fmt"
-	"math"
 
 	"github.com/adrienlucbert/gofeur/optional"
 	"github.com/adrienlucbert/gofeur/pathfinding/board"
+	"github.com/adrienlucbert/gofeur/pkg"
 )
-
-// Vector struct stores 2 ints, defining a position or a movement
-type Vector struct {
-	X int
-	Y int
-}
-
-func (v Vector) String() string {
-	return fmt.Sprintf("(%d;%d)", v.X, v.Y)
-}
-
-func (v Vector) add(rhs Vector) Vector {
-	v.X += rhs.X
-	v.Y += rhs.Y
-	return v
-}
-
-func (v Vector) squaredDistance(rhs Vector) float32 {
-	return float32(math.Pow(float64(v.X-rhs.X), 2) + math.Pow(float64(v.Y-rhs.Y), 2))
-}
 
 // ResolveH returns, if possible, a series of moves that form a path between
 // start and end, using a provided heuristic
-func ResolveH(maze *board.Board, start Vector, end Vector, heuristic func(Vector) float32) ([]Vector, error) {
+func ResolveH(maze *board.Board, start pkg.Vector, end pkg.Vector, heuristic func(pkg.Vector) float32) ([]pkg.Vector, error) {
 	return astar(maze, start, end, heuristic)
 }
 
-func distanceBasedHeuristic(current Vector, end Vector) float32 {
-	return current.squaredDistance(end)
+func distanceBasedHeuristic(current pkg.Vector, end pkg.Vector) float32 {
+	return current.SquaredDistance(end)
 }
 
 // Resolve returns, if possible, a series of moves that form a path between
 // start and end, using a distance-based heuristic
-func Resolve(maze *board.Board, start Vector, end Vector) ([]Vector, error) {
-	heuristic := func(n Vector) float32 {
+func Resolve(maze *board.Board, start pkg.Vector, end pkg.Vector) ([]pkg.Vector, error) {
+	heuristic := func(n pkg.Vector) float32 {
 		return distanceBasedHeuristic(n, end)
 	}
 	return astar(maze, start, end, heuristic)
@@ -51,7 +30,7 @@ func Resolve(maze *board.Board, start Vector, end Vector) ([]Vector, error) {
 
 type node struct {
 	parent   *node
-	position Vector
+	position pkg.Vector
 	g        float32
 	h        float32
 	f        float32
@@ -60,7 +39,7 @@ type node struct {
 // ErrPathNotFound is returned when a path couldn't be found
 var ErrPathNotFound = errors.New("Couldn't find a path")
 
-func astar(b *board.Board, start Vector, end Vector, heuristic func(Vector) float32) ([]Vector, error) {
+func astar(b *board.Board, start pkg.Vector, end pkg.Vector, heuristic func(pkg.Vector) float32) ([]pkg.Vector, error) {
 	openQueue := []node{}
 	closedQueue := []node{}
 	openQueue = append(openQueue, node{position: start})
@@ -76,10 +55,10 @@ func astar(b *board.Board, start Vector, end Vector, heuristic func(Vector) floa
 		}
 
 		children := []node{}
-		for _, direction := range []Vector{{0, 1}, {0, -1}, {1, 0}, {-1, 0}} {
+		for _, direction := range []pkg.Vector{{X: 0, Y: 1}, {X: 0, Y: -1}, {X: 1, Y: 0}, {X: -1, Y: 0}} {
 			child := node{
 				parent:   &bestNode,
-				position: bestNode.position.add(direction),
+				position: bestNode.position.Add(direction),
 			}
 			if isPositionAvailable(b, child.position) {
 				children = append(children, child)
@@ -100,7 +79,7 @@ func astar(b *board.Board, start Vector, end Vector, heuristic func(Vector) floa
 			openQueue = append(openQueue, child)
 		}
 	}
-	return []Vector{}, ErrPathNotFound
+	return []pkg.Vector{}, ErrPathNotFound
 }
 
 func findBestNodeInList(list []node) (int, node) {
@@ -115,7 +94,7 @@ func findBestNodeInList(list []node) (int, node) {
 	return bestIndex.Value(), bestNode.Value()
 }
 
-func isPositionAvailable(maze *board.Board, position Vector) bool {
+func isPositionAvailable(maze *board.Board, position pkg.Vector) bool {
 	if position.X < 0 || position.Y < 0 || !maze.IsInBounds(uint(position.X), uint(position.Y)) {
 		return false
 	}
@@ -125,11 +104,11 @@ func isPositionAvailable(maze *board.Board, position Vector) bool {
 	return true
 }
 
-func reconstructPath(current *node) []Vector {
-	path := []Vector{}
+func reconstructPath(current *node) []pkg.Vector {
+	path := []pkg.Vector{}
 	for current != nil && current.parent != nil {
 		// PERF: reverse list once at the end instead of prepending each node
-		path = append([]Vector{current.position}, path...)
+		path = append([]pkg.Vector{current.position}, path...)
 		current = current.parent
 	}
 	return path

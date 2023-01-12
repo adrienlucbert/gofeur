@@ -20,11 +20,11 @@ func colorToUint8(color string) uint8 {
 	colorLower := strings.ToLower(color)
 
 	if colorLower == "green" {
-		return Green
+		return uint8(Green)
 	} else if colorLower == "yellow" {
-		return Yellow
+		return uint8(Yellow)
 	}
-	return Blue
+	return uint8(Blue)
 }
 
 func factory[T any](elem T, args ...string) {

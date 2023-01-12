@@ -9,8 +9,9 @@ import (
 
 // UILayer is an optional application layer responsible for displaying the UI
 type UILayer struct {
-	Gofeur *Gofeur
-	ui     *UI
+	Gofeur     *Gofeur
+	Simulation *Simulation
+	ui         *UI
 }
 
 func (layer *UILayer) run() {
@@ -30,12 +31,12 @@ func (layer *UILayer) Attach() {
 
 // Update updates the UI and re-renders it
 func (layer *UILayer) Update(elapsedTime time.Duration) {
-	if layer.Gofeur.Step%2 == 0 {
+	if layer.Simulation.Round%2 == 0 {
 		layer.ui.OutputBox.SetTitle("Go QUOI?")
 	} else {
 		layer.ui.OutputBox.SetTitle("Go FEUR...")
 	}
-	layer.ui.OutputBox.SetCell(int(layer.Gofeur.Step), 0, tview.NewTableCell(fmt.Sprintf("round %d\n", layer.Gofeur.Step)))
+	layer.ui.OutputBox.SetCell(int(layer.Simulation.Round), 0, tview.NewTableCell(fmt.Sprintf("round %d\n", layer.Simulation.Round)))
 	layer.ui.App.Draw()
 }
 

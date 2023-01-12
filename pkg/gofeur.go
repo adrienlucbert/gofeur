@@ -7,7 +7,7 @@ import (
 type color_t uint8
 
 const (
-	Green = iota
+	Green color_t = iota
 	Yellow
 	Blue
 )
@@ -68,22 +68,7 @@ func (p Parcel) String() string {
 	return fmt.Sprintf("%sP%s", str, white)
 }
 
-type GofeurStatus int
-
-const (
-	// Idle is Gofeur's state before it started
-	Idle GofeurStatus = iota
-	// Running is Gofeur's state before it's running
-	Running
-	// Finished is Gofeur's state when it's over and no parcel remains in the warehouse
-	Finished
-	// Unfinished is Gofeur's state when it's over but parcels remains in the warehouse
-	Unfinished
-)
-
 type Gofeur struct {
-	st     Startup
-	sb     StorageBuilding
-	Step   uint32
-	Status GofeurStatus
+	st Startup
+	sb StorageBuilding
 }

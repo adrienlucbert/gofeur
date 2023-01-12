@@ -32,18 +32,19 @@ func main() {
 	defer fd.Close()
 
 	gofeur := pkg.ParseFile(f)
+	simulation := pkg.NewSimulation(gofeur)
 
 	layers := []pkg.Layer{
-		&pkg.LogicLayer{Gofeur: gofeur},
+		&pkg.LogicLayer{Simulation: &simulation},
 	}
 	if *displayUI {
-		layers = append(layers, &pkg.UILayer{Gofeur: gofeur})
+		layers = append(layers, &pkg.UILayer{Gofeur: gofeur, Simulation: &simulation})
 	}
 	for _, layer := range layers {
 		layer.Attach()
 	}
 	lastUpdateTime := time.Now()
-	for gofeur.Status == pkg.Running {
+	for simulation.Status == pkg.Running {
 		updateTime := time.Now()
 		elapsedTime := updateTime.Sub(lastUpdateTime)
 		lastUpdateTime = updateTime
