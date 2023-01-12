@@ -1,10 +1,125 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestParseReader(t *testing.T) {
+	type testCase struct {
+		input          []string
+		expectedOutput Simulation
+		hasError       bool
+	}
+
+	var testCases = []testCase{
+		{
+			input: []string{
+				"5 4 1000",
+				"colis_a_livrer 2 1 green",
+				"paquet 2 2 BLUE",
+				"deadpool 0 3 yellow",
+				"colère_DU_dragon 4 1 green",
+				"transpalette_1 0 5",
+				"camion_b 3 4 4000 5",
+				"camion_a 2 2 4007 4",
+			},
+			expectedOutput: Simulation{
+				cycle: 1000,
+				warehouse: Warehouse{
+					width:  5,
+					length: 4,
+					parcels: []Parcel{
+						{
+							name:       "colis_a_livrer",
+							Coordinate: Coordinate{X: 2, Y: 1},
+							weight:     green,
+						},
+						{
+							name:       "paquet",
+							Coordinate: Coordinate{X: 2, Y: 2},
+							weight:     blue,
+						},
+						{
+							name:       "deadpool",
+							Coordinate: Coordinate{X: 0, Y: 3},
+							weight:     yellow,
+						},
+						{
+							name: "colère_DU_dragon",
+							Coordinate: Coordinate{
+								X: 4,
+								Y: 1,
+							},
+							weight: green,
+						},
+					},
+					forklifts: []Forklift{
+						{
+							name:       "transpalette_1",
+							Coordinate: Coordinate{X: 0, Y: 5},
+						},
+					},
+					trucks: []Truck{
+						{
+							name:       "camion_b",
+							Coordinate: Coordinate{X: 3, Y: 4},
+							max_weight: 4000,
+							available:  5,
+						},
+						{
+							name:       "camion_a",
+							Coordinate: Coordinate{X: 2, Y: 2},
+							max_weight: 4007,
+							available:  4,
+						},
+					},
+				},
+			},
+		},
+		{
+			input: []string{
+				"10 50 243",
+				"forklift 1 10",
+				"truck 0 5 10000 60",
+			},
+			expectedOutput: Simulation{
+				cycle: 243,
+				warehouse: Warehouse{
+					width: 10, length: 50,
+					forklifts: []Forklift{
+						{
+							name:       "forklift",
+							Coordinate: Coordinate{X: 1, Y: 10},
+						},
+					},
+					trucks: []Truck{
+						{
+							name:       "truck",
+							Coordinate: Coordinate{X: 0, Y: 5},
+							max_weight: 10000,
+							available:  60,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		var input = strings.Join(testCase.input, "\n")
+		var reader = strings.NewReader(input)
+		var simulation, err = parseFromReader(reader)
+
+		if testCase.hasError {
+			assert.NotNil(t, err)
+		} else {
+			assert.Equal(t, simulation, testCase.expectedOutput)
+		}
+	}
+}
 
 func TestParseWarehouseSection(t *testing.T) {
 	type testCase struct {

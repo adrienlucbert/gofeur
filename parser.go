@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -34,15 +35,15 @@ const (
 	invalidWeight
 )
 
-type InputFileError struct {
+type InputError struct {
 	filename string
 	line     uint32
 	section  string
 	err      error
 }
 
-func (err InputFileError) Error() string {
-	var str = fmt.Sprintf("Error in input file '%s' (line: %d) when parsing a %s", err.filename, err.line, err.section)
+func (err InputError) Error() string {
+	var str = fmt.Sprintf("line: %d when parsing a %s", err.line, err.section)
 
 	if err.err != nil {
 		str = str + fmt.Sprintf(": %s", err.err.Error())
@@ -104,9 +105,21 @@ type parseParcelError struct {
 }
 
 func parseInputFile(file string) (Simulation, error) {
-	fd, f := getFileContent(file)
-	defer fd.Close()
+	var handle, err = os.Open(file)
+	if err != nil {
+		return Simulation{}, err
+	}
+	defer handle.Close()
 
+	simulation, err := parseFromReader(handle)
+	if err != nil {
+		err = fmt.Errorf("Error in input file '%s': %s", file, err.Error())
+	}
+	return simulation, err
+}
+
+func parseFromReader(reader io.Reader) (Simulation, error) {
+	var scanner = bufio.NewScanner(reader)
 	var parser = struct {
 		section                       string
 		line                          uint32
@@ -116,10 +129,10 @@ func parseInputFile(file string) (Simulation, error) {
 	var simulation = Simulation{}
 	var err ParserError
 
-	for parser.may_be_parsed_by_next_section || f.Scan() {
+	for parser.may_be_parsed_by_next_section || scanner.Scan() {
 		if err == nil && !parser.may_be_parsed_by_next_section {
 			parser.line += 1
-			var line = f.Text()
+			var line = scanner.Text()
 			parser.tokens = strings.Split(line, " ")
 		}
 		parser.may_be_parsed_by_next_section = false
@@ -129,11 +142,10 @@ func parseInputFile(file string) (Simulation, error) {
 			simulation, err = parseWarehouseSection(parser.tokens)
 
 			if err != nil {
-				return simulation, InputFileError{
-					filename: file,
-					line:     parser.line,
-					section:  parser.section,
-					err:      err,
+				return simulation, InputError{
+					line:    parser.line,
+					section: parser.section,
+					err:     err,
 				}
 
 			}
@@ -169,11 +181,10 @@ func parseInputFile(file string) (Simulation, error) {
 					parser.section = next_section.Value()
 					parser.may_be_parsed_by_next_section = true
 				} else {
-					return Simulation{}, InputFileError{
-						filename: file,
-						line:     parser.line,
-						section:  parser.section,
-						err:      errors.New("invalid line"),
+					return Simulation{}, InputError{
+						line:    parser.line,
+						section: parser.section,
+						err:     errors.New("invalid line"),
 					}
 				}
 			} else {
@@ -183,11 +194,10 @@ func parseInputFile(file string) (Simulation, error) {
 	}
 
 	if err != nil {
-		return simulation, InputFileError{
-			filename: file,
-			line:     parser.line,
-			section:  parser.section,
-			err:      err,
+		return simulation, InputError{
+			line:    parser.line,
+			section: parser.section,
+			err:     err,
 		}
 	}
 	return simulation, err
@@ -204,17 +214,6 @@ func getNextSection(section string) optional.Optional[string] {
 	default:
 		return optional.NewEmpty[string]()
 	}
-}
-
-func getFileContent(file string) (*os.File, *bufio.Scanner) {
-	fd, err := os.Open(file)
-	if err != nil {
-		println(err)
-		panic("cannot open file")
-	}
-	fileScanner := bufio.NewScanner(fd)
-	fileScanner.Split(bufio.ScanLines)
-	return fd, fileScanner
 }
 
 func parseWarehouseSection(tokens []string) (Simulation, ParserError) {
