@@ -160,7 +160,7 @@ func TestParseWeight(t *testing.T) {
 		var nb, err = parseWeight(testCase.input)
 
 		if testCase.hasError {
-			assert.NotEqual(t, err, nil)
+			assert.NotNil(t, err)
 		} else {
 			assert.Equal(t, nb, testCase.expectedOutput)
 		}
@@ -191,7 +191,7 @@ func TestParseNumericField(t *testing.T) {
 		var nb, err = parseUint32Field(testCase.input)
 
 		if testCase.hasError {
-			assert.NotEqual(t, err, nil)
+			assert.NotNil(t, err)
 		} else {
 			assert.Equal(t, nb, testCase.expectedOutput)
 		}
