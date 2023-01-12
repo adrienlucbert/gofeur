@@ -1,4 +1,5 @@
-package main
+// Package pkg .
+package pkg
 
 import (
 	"bufio"
@@ -118,10 +119,12 @@ func (err inputFileError) Error() string {
 	return fmt.Sprintf("Error in input file '%s': %s", err.file, err.err.Error())
 }
 
-func parseInputFile(file string) (simulation, error) {
+// ParseInputFile parses a simulation input file. If successful, return the
+// parsed Simulation.
+func ParseInputFile(file string) (Simulation, error) {
 	handle, err := os.Open(file)
 	if err != nil {
-		return simulation{}, inputFileOpenError{err: err}
+		return Simulation{}, inputFileOpenError{err: err}
 	}
 	defer handle.Close()
 
@@ -134,7 +137,7 @@ func parseInputFile(file string) (simulation, error) {
 
 var errInvalidLine = errors.New("invalid line")
 
-func parseFromReader(reader io.Reader) (simulation, error) {
+func parseFromReader(reader io.Reader) (Simulation, error) {
 	scanner := bufio.NewScanner(reader)
 	parser := struct {
 		section                  string
@@ -142,7 +145,7 @@ func parseFromReader(reader io.Reader) (simulation, error) {
 		tokens                   []string
 		mayBeParsedByNextSection bool
 	}{section: "warehouse"}
-	simul := simulation{}
+	simul := Simulation{}
 	var err parserError
 
 	for parser.mayBeParsedByNextSection || scanner.Scan() {
@@ -158,7 +161,7 @@ func parseFromReader(reader io.Reader) (simulation, error) {
 			simul, err = parseWarehouseSection(parser.tokens)
 
 			if err != nil {
-				return simulation{}, inputError{
+				return Simulation{}, inputError{
 					line:    parser.line,
 					section: parser.section,
 					err:     err,
@@ -231,8 +234,8 @@ func getNextSection(section string) optional.Optional[string] {
 	}
 }
 
-func parseWarehouseSection(tokens []string) (simulation, parserError) {
-	simul := simulation{}
+func parseWarehouseSection(tokens []string) (Simulation, parserError) {
+	simul := Simulation{}
 	warehouseTokenParsers := []tokenParser{
 		{
 			fieldName: "width",

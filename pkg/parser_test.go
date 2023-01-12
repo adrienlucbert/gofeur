@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"strings"
@@ -10,7 +10,7 @@ import (
 func TestParseReader(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput simulation
+		expectedOutput Simulation
 		hasError       bool
 	}
 
@@ -26,7 +26,7 @@ func TestParseReader(t *testing.T) {
 				"camion_b 3 4 4000 5",
 				"camion_a 2 2 4007 4",
 			},
-			expectedOutput: simulation{
+			expectedOutput: Simulation{
 				cycle: 1000,
 				warehouse: warehouse{
 					width:  5,
@@ -85,7 +85,7 @@ func TestParseReader(t *testing.T) {
 				"forklift 1 10",
 				"truck 0 5 10000 60",
 			},
-			expectedOutput: simulation{
+			expectedOutput: Simulation{
 				cycle: 243,
 				warehouse: warehouse{
 					width: 10, length: 50,
@@ -124,7 +124,7 @@ func TestParseReader(t *testing.T) {
 func TestParseWarehouseSection(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput simulation
+		expectedOutput Simulation
 		hasError       bool
 		errorKind      parserErrorKind
 	}
@@ -153,7 +153,7 @@ func TestParseWarehouseSection(t *testing.T) {
 		{
 			input:    []string{"453", "4952", "34"},
 			hasError: false,
-			expectedOutput: simulation{
+			expectedOutput: Simulation{
 				cycle: 34,
 				warehouse: warehouse{
 					width:  453,

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/adrienlucbert/gofeur/pkg"
 )
 
 func main() {
@@ -22,20 +24,36 @@ func main() {
 
 var errNoInputFileProvided = errors.New("No input file provided")
 
+type parserError struct {
+	parser error
+}
+
+func (err parserError) Error() string {
+	return fmt.Sprintf("Parser: %s", err.parser.Error())
+}
+
+type simulationValidityError struct {
+	validation error
+}
+
+func (err simulationValidityError) Error() string {
+	return fmt.Sprintf("Simulation validity: %s", err.validation.Error())
+}
+
 func runGogeur() error {
 	if len(os.Args) != 2 {
 		return errNoInputFileProvided
 	}
 
 	inputFilepath := os.Args[1]
-	simulation, err := parseInputFile(inputFilepath)
+	simulation, err := pkg.ParseInputFile(inputFilepath)
 	if err != nil {
-		return err
+		return parserError{parser: err}
 	}
-	err = verifySimulationValidity(simulation)
+	err = pkg.VerifySimulationValidity(simulation)
 	if err != nil {
-		return err
+		return simulationValidityError{validation: err}
 	}
 
-	return err
+	return nil
 }

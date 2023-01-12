@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"testing"
@@ -8,17 +8,17 @@ import (
 
 func TestVerifySimulationValidity(t *testing.T) {
 	type testCase struct {
-		input    simulation
+		input    Simulation
 		hasError bool
 	}
 
 	testCases := []testCase{
 		{
-			input:    simulation{},
+			input:    Simulation{},
 			hasError: true,
 		},
 		{
-			input: simulation{
+			input: Simulation{
 				warehouse: warehouse{
 					forklifts: []forklift{
 						{name: "forklift"},
@@ -28,7 +28,7 @@ func TestVerifySimulationValidity(t *testing.T) {
 			hasError: true,
 		},
 		{
-			input: simulation{
+			input: Simulation{
 				warehouse: warehouse{
 					width:  1,
 					length: 1,
@@ -43,7 +43,7 @@ func TestVerifySimulationValidity(t *testing.T) {
 			hasError: true,
 		},
 		{
-			input: simulation{
+			input: Simulation{
 				warehouse: warehouse{
 					width:  1,
 					length: 1,
@@ -58,7 +58,7 @@ func TestVerifySimulationValidity(t *testing.T) {
 			hasError: true,
 		},
 		{
-			input: simulation{
+			input: Simulation{
 				warehouse: warehouse{
 					width:  2,
 					length: 1,
@@ -73,7 +73,7 @@ func TestVerifySimulationValidity(t *testing.T) {
 			hasError: true,
 		},
 		{
-			input: simulation{
+			input: Simulation{
 				warehouse: warehouse{
 					width:  2,
 					length: 1,
@@ -90,7 +90,7 @@ func TestVerifySimulationValidity(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := verifySimulationValidity(testCase.input)
+		err := VerifySimulationValidity(testCase.input)
 
 		if testCase.hasError {
 			assert.NotNil(t, err)

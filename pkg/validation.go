@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"errors"
@@ -19,7 +19,13 @@ func (err dupPropertyError) Error() string {
 	return strings.Join(err.dupPropertiesEntities, "\n")
 }
 
-func verifySimulationValidity(simulation simulation) error {
+// VerifySimulationValidity return an error if one of the following condition is meet:
+//
+//   - there is no forklift in `simulation`
+//   - there is no truck in `simulation`
+//   - two entities are on the same grid cell
+//   - two entities bears the same name
+func VerifySimulationValidity(simulation Simulation) error {
 	if len(simulation.warehouse.forklifts) == 0 {
 		return errAtLeastOneForklift
 	}
@@ -42,7 +48,7 @@ func verifySimulationValidity(simulation simulation) error {
 	return ensureForDuplicatedEntitiyName(entities)
 }
 
-func makeEntitiesArray(simulation simulation) []entity {
+func makeEntitiesArray(simulation Simulation) []entity {
 	nbEntities := len(simulation.warehouse.parcels) + len(simulation.warehouse.forklifts) + len(simulation.warehouse.trucks)
 	entities := make([]entity, 0, nbEntities)
 

@@ -1,10 +1,11 @@
-package main
+package pkg
 
 import "fmt"
 
 type gridUnit uint32
 
-type simulation struct {
+// Simulation contains the content of a parsed input file.
+type Simulation struct {
 	cycle     uint32
 	warehouse warehouse
 }
