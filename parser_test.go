@@ -6,6 +6,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestParseWarehouseSection(t *testing.T) {
+	type testCase struct {
+		input          []string
+		expectedOutput Simulation
+		hasError       bool
+		errorKind      ParserErrorKind
+	}
+
+	var testCases = []testCase{
+		{
+			input:     []string{""},
+			hasError:  true,
+			errorKind: invalidNumberOfTokens,
+		},
+		{
+			input:     []string{"koi", "22", "45"},
+			hasError:  true,
+			errorKind: invalidUnsignedInteger,
+		},
+		{
+			input:     []string{"33", "pheur", "34"},
+			hasError:  true,
+			errorKind: invalidUnsignedInteger,
+		},
+		{
+			input:     []string{"33", "433", "!"},
+			hasError:  true,
+			errorKind: invalidUnsignedInteger,
+		},
+		{
+			input:    []string{"453", "4952", "34"},
+			hasError: false,
+			expectedOutput: Simulation{
+				cycle: 34,
+				warehouse: Warehouse{
+					width:  453,
+					length: 4952,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		var simulation, err = parseWarehouseSection(testCase.input)
+
+		if testCase.hasError {
+			assert.Equal(t, err.Kind(), testCase.errorKind)
+		} else {
+			assert.Equal(t, simulation, testCase.expectedOutput)
+		}
+	}
+}
+
 func TestParseParcel(t *testing.T) {
 	type testCase struct {
 		input          []string

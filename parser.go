@@ -107,44 +107,54 @@ func parseInputFile(file string) (Simulation, error) {
 	fd, f := getFileContent(file)
 	defer fd.Close()
 
+	var parser = struct {
+		section                       string
+		line                          uint32
+		tokens                        []string
+		may_be_parsed_by_next_section bool
+	}{section: "warehouse"}
 	var simulation = Simulation{}
-	var err ParserError = nil
-	var line string
-	var line_nb uint32
-	var section = "warehouse"
+	var err ParserError
 
-	for f.Scan() {
-		if err == nil {
-			line_nb += 1
-			line = f.Text()
+	for parser.may_be_parsed_by_next_section || f.Scan() {
+		if err == nil && !parser.may_be_parsed_by_next_section {
+			parser.line += 1
+			var line = f.Text()
+			parser.tokens = strings.Split(line, " ")
 		}
+		parser.may_be_parsed_by_next_section = false
 
-		var tokens = strings.Split(line, " ")
-		switch section {
+		switch parser.section {
 		case "warehouse":
-			simulation, err = parseWarehouseSection(tokens)
+			simulation, err = parseWarehouseSection(parser.tokens)
 
 			if err != nil {
-				return simulation, err
+				return simulation, InputFileError{
+					filename: file,
+					line:     parser.line,
+					section:  parser.section,
+					err:      err,
+				}
+
 			}
-			section = getNextSection(section).Value()
+			parser.section = getNextSection(parser.section).Value()
 		case "parcel":
 			var parcel = Parcel{}
-			parcel, err = parseParcel(tokens)
+			parcel, err = parseParcel(parser.tokens)
 
 			if err == nil {
 				simulation.warehouse.parcels = append(simulation.warehouse.parcels, parcel)
 			}
 		case "forklift":
 			var forklift = Forklift{}
-			forklift, err = parseForklift(tokens)
+			forklift, err = parseForklift(parser.tokens)
 
 			if err == nil {
 				simulation.warehouse.forklifts = append(simulation.warehouse.forklifts, forklift)
 			}
 		case "truck":
 			var truck = Truck{}
-			truck, err = parseTruck(tokens)
+			truck, err = parseTruck(parser.tokens)
 
 			if err == nil {
 				simulation.warehouse.trucks = append(simulation.warehouse.trucks, truck)
@@ -153,15 +163,16 @@ func parseInputFile(file string) (Simulation, error) {
 
 		if err != nil {
 			if err.Kind() == invalidNumberOfTokens {
-				var next_section = getNextSection(section)
+				var next_section = getNextSection(parser.section)
 
 				if next_section.HasValue() {
-					section = next_section.Value()
+					parser.section = next_section.Value()
+					parser.may_be_parsed_by_next_section = true
 				} else {
 					return Simulation{}, InputFileError{
 						filename: file,
-						line:     line_nb,
-						section:  section,
+						line:     parser.line,
+						section:  parser.section,
 						err:      errors.New("invalid line"),
 					}
 				}
@@ -174,8 +185,8 @@ func parseInputFile(file string) (Simulation, error) {
 	if err != nil {
 		return simulation, InputFileError{
 			filename: file,
-			line:     line_nb,
-			section:  section,
+			line:     parser.line,
+			section:  parser.section,
 			err:      err,
 		}
 	}
