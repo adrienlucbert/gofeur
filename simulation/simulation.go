@@ -145,7 +145,7 @@ func (s *Simulation) simulateRound() {
 		s.Status = Finished
 		return
 	}
-	logger.Debug("Round %d\n", s.Round+1)
+	logger.Info("tour %d\n", s.Round+1)
 	for i := range s.forklifts {
 		s.forklifts[i].simulateRound(s)
 	}
@@ -154,6 +154,7 @@ func (s *Simulation) simulateRound() {
 	}
 	s.updateBoard()
 	logger.Debug("%s\n", s.board.String())
+	logger.Info("\n")
 
 	// Increment round and end simulation if needed
 	s.Round++
@@ -163,4 +164,11 @@ func (s *Simulation) simulateRound() {
 }
 
 func (s *Simulation) terminate() {
+	reaction := map[Status]string{
+		Running:    "😱",
+		Idle:       "😱",
+		Finished:   "😎",
+		Unfinished: "🙂",
+	}[s.Status]
+	logger.Info("%s\n", reaction)
 }

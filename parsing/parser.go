@@ -2,11 +2,12 @@ package parsing
 
 import (
 	"bufio"
-	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/adrienlucbert/gofeur/logger"
 )
 
 const (
@@ -32,7 +33,7 @@ func factory[T any](elem T, args ...string) {
 
 	for i, arg := range args {
 		field := va.Elem().Field(i)
-		fmt.Printf("\ttype %s - %d\n", field.Type().Name(), i)
+		logger.Debug("\ttype %s - %d\n", field.Type().Name(), i)
 		fieldType := field.Type().Name()
 		switch fieldType {
 		case "uint":
@@ -56,7 +57,7 @@ func parseLine(index int, line string, gofeur *Gofeur) {
 	switch index {
 	case STARTUP:
 		if (Startup{}) != gofeur.ST {
-			fmt.Println(`Startup values has already been initialized, 
+			logger.Debug(`Startup values has already been initialized, 
             the line will be ignored`)
 			return
 		}
@@ -91,14 +92,14 @@ func ParseFile(file *bufio.Scanner) *Gofeur {
 		for i, pattern := range patterns {
 			matched, _ := regexp.MatchString(pattern, line)
 			if matched {
-				fmt.Printf("matched ->[%s]<- with -> %s\n", line, pattern)
+				logger.Debug("matched ->[%s]<- with -> %s\n", line, pattern)
 				parseLine(i, line, &gofeur)
 				isValid = matched
 				break
 			}
 		}
 		if !isValid {
-			fmt.Printf("Error this line is not valid: %s\n", line)
+			logger.Debug("Error this line is not valid: %s\n", line)
 			return nil
 		}
 		isValid = false

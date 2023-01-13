@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"github.com/adrienlucbert/gofeur/logger"
 	"github.com/adrienlucbert/gofeur/parsing"
 	"github.com/adrienlucbert/gofeur/pkg"
 )
@@ -73,4 +74,9 @@ func (t *truck) simulateRound(simulation *Simulation) {
 			t.status = Loading
 		}
 	}
+	action := map[TruckStatus]string{
+		Loading: "WAITING",
+		Away:    "GONE",
+	}[t.status]
+	logger.Info("%s %s %d/%d\n", t.name, action, t.load, t.capacity)
 }
