@@ -24,14 +24,9 @@ type forklift struct {
 	name   string
 	pos    pkg.Vector
 	parcel optional.Optional[*parcel]
-	state  ForkLiftStatus
+	status ForkLiftStatus
 	target optional.Optional[prop]
 	path   optional.Optional[[]pkg.Vector]
-}
-
-// Implement prop.Pos()
-func (f *forklift) Pos() pkg.Vector {
-	return f.pos
 }
 
 func newForkliftFromParsing(from *parsing.Forklift) forklift {
@@ -39,7 +34,7 @@ func newForkliftFromParsing(from *parsing.Forklift) forklift {
 		name:   from.Name,
 		pos:    pkg.Vector{X: int(from.X), Y: int(from.Y)},
 		parcel: optional.NewEmpty[*parcel](),
-		state:  Empty,
+		status: Empty,
 		target: optional.NewEmpty[prop](),
 		path:   optional.NewEmpty[[]pkg.Vector](),
 	}
@@ -84,13 +79,13 @@ func (f *forklift) findClosestTruck(simulation *Simulation) error {
 var errForkliftAlreadyLoaded = errors.New("Forklift already loaded")
 
 func (f *forklift) grabParcel(parcel *parcel) error {
-	if f.state == Loaded {
+	if f.status == Loaded {
 		return errForkliftAlreadyLoaded
 	}
 	f.target.Clear()
 	f.path.Clear()
 	f.parcel.Set(parcel)
-	f.state = Loaded
+	f.status = Loaded
 	parcel.status = Carried
 	return nil
 }
@@ -110,7 +105,7 @@ func (f *forklift) depositParcel(truck *truck) error {
 	f.target.Clear()
 	f.path.Clear()
 	f.parcel.Clear()
-	f.state = Empty
+	f.status = Empty
 	return nil
 }
 
@@ -149,7 +144,7 @@ func (f *forklift) seekTruck(simulation *Simulation) {
 }
 
 func (f *forklift) simulateRound(simulation *Simulation) {
-	switch f.state {
+	switch f.status {
 	case Empty:
 		f.seekParcel(simulation)
 	case Loaded:

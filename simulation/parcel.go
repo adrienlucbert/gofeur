@@ -29,6 +29,11 @@ func (p *parcel) Pos() pkg.Vector {
 	return p.pos
 }
 
+// Implement prop.IsAvailable()
+func (p *parcel) IsAvailable() bool {
+	return p.status == StandingBy
+}
+
 func newParcelFromParsing(from *parsing.Parcel) parcel {
 	return parcel{
 		name: from.Name,

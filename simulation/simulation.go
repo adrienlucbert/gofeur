@@ -24,6 +24,7 @@ const (
 
 type prop interface {
 	Pos() pkg.Vector
+	IsAvailable() bool
 }
 
 // Simulation represents the simulation data
@@ -46,10 +47,10 @@ func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
 	var closestParcel *parcel
 	var closestParcelDistance float32
 	for i := range parcels {
-		if parcels[i].status != StandingBy {
+		parcel := &parcels[i]
+		if !parcel.IsAvailable() {
 			continue
 		}
-		parcel := &parcels[i]
 		parcelDistance := pos.SquaredDistance(parcel.pos)
 		if closestParcel == nil || parcelDistance < closestParcelDistance {
 			closestParcel = parcel
@@ -62,12 +63,16 @@ func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
 // TODO: make truck and parcel implement a common interface to avoid repeating code
 // NOTE: turns out the type-specific filter condition makes it difficult as
 // predicates can't be called with an interface as parameter
+// NOTE: giving `prop` a `isAvailable` method would solve this issue
+// NOTE: turns out it doesn't, at passing []parcel as []prop is impossible
 func findClosestTruck(trucks []truck, pos pkg.Vector) *truck {
 	var closestTruck *truck
 	var closestTruckDistance float32
 	for i := range trucks {
-		// TODO: stop if truck is gone
 		truck := &trucks[i]
+		if !truck.IsAvailable() {
+			continue
+		}
 		truckDistance := pos.SquaredDistance(truck.pos)
 		if closestTruck == nil || truckDistance < closestTruckDistance {
 			closestTruck = truck
