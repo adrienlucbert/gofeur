@@ -57,6 +57,7 @@ func (f *forklift) findPathToTarget(simulation *Simulation) error {
 func (f *forklift) findClosestParcel(simulation *Simulation) error {
 	// PERF: don't refetch target if not reached
 	if target := findClosestParcel(simulation.parcels, f.pos); target != nil {
+		target.status = Targeted
 		f.target.Set(target)
 	} else {
 		f.target.Clear()
@@ -90,6 +91,12 @@ func (f *forklift) grabParcel(parcel *parcel) error {
 	return nil
 }
 
+func (f *forklift) dropParcelFocus() {
+	f.parcel.Value().status = StandingBy
+	f.target.Clear()
+	f.path.Clear()
+}
+
 var errForkliftEmpty = errors.New("Forklift is empty")
 var errTruckFull = errors.New("Truck is full")
 
@@ -111,6 +118,9 @@ func (f *forklift) depositParcel(truck *truck) error {
 
 func (f *forklift) seekParcel(simulation *Simulation) {
 	if !f.target.HasValue() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
+		if f.target.HasValue() {
+			f.dropParcelFocus()
+		}
 		if err := f.findClosestParcel(simulation); err != nil {
 			logger.Error("%s\n", err.Error())
 			return

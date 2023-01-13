@@ -11,6 +11,8 @@ type ParcelStatus int
 const (
 	// StandingBy is the parcel's state when it's not carried nor dropped off
 	StandingBy ParcelStatus = iota
+	// Targeted is the parcel's state when it's been targeted by a forklift
+	Targeted
 	// Carried is the parcel's state when it's being carried by a forklift
 	Carried
 	// DroppedOff is the parcel's state when it's been dropped off in a truck
