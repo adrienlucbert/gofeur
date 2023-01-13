@@ -108,7 +108,7 @@ func New(gofeur *parsing.Gofeur) Simulation {
 func (s *Simulation) updateBoard() {
 	s.board.Clear()
 	for i := range s.parcels {
-		if s.parcels[i].status != StandingBy {
+		if s.parcels[i].status == Carried || s.parcels[i].status == DroppedOff {
 			continue
 		}
 		s.board.At(uint(s.parcels[i].pos.X), uint(s.parcels[i].pos.Y)).Blocked = true
@@ -123,6 +123,9 @@ func (s *Simulation) updateBoard() {
 		s.board.At(uint(s.forklifts[i].pos.X), uint(s.forklifts[i].pos.Y)).DebugChar = 'L'
 	}
 	for i := range s.trucks {
+		if s.trucks[i].status != Loading {
+			continue
+		}
 		s.board.At(uint(s.trucks[i].pos.X), uint(s.trucks[i].pos.Y)).Blocked = true
 		s.board.At(uint(s.trucks[i].pos.X), uint(s.trucks[i].pos.Y)).DebugChar = 'T'
 	}

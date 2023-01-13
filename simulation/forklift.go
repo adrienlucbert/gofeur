@@ -92,7 +92,7 @@ func (f *forklift) grabParcel(parcel *parcel) error {
 }
 
 func (f *forklift) dropParcelFocus() {
-	f.parcel.Value().status = StandingBy
+	f.target.Value().(*parcel).status = StandingBy
 	f.target.Clear()
 	f.path.Clear()
 }
@@ -137,7 +137,7 @@ func (f *forklift) seekParcel(simulation *Simulation) {
 }
 
 func (f *forklift) seekTruck(simulation *Simulation) {
-	if !f.target.HasValue() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
+	if !f.target.HasValue() || !f.target.Value().IsAvailable() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
 		if err := f.findClosestTruck(simulation); err != nil {
 			logger.Error("%s\n", err.Error())
 			return

@@ -21,7 +21,8 @@ type truck struct {
 	capacity uint
 	load     uint
 	status   TruckStatus
-	// TODO: away time remaining
+	awayTime uint
+	awayLeft uint
 }
 
 // Implement prop.Pos()
@@ -40,8 +41,36 @@ func newTruckFromParsing(from *parsing.Truck) truck {
 		pos:      pkg.Vector{X: int(from.X), Y: int(from.Y)},
 		capacity: from.Weight,
 		load:     0,
+		awayTime: from.RAvail,
+		awayLeft: 0,
 	}
 }
 
+func (t *truck) startDelivery() {
+	t.status = Away
+	t.awayLeft = t.awayTime
+}
+
 func (t *truck) simulateRound(simulation *Simulation) {
+	switch t.status {
+	case Loading:
+		if t.load > 0 {
+			t.startDelivery()
+		}
+		// TODO: determine whether or not it is profitable to start delivery, based on:
+		// - distance to nearest forklift and its load
+		// - distance to nearest parcel and its weight
+		// availableLoad := t.capacity - t.load
+		// if target := findClosestParcel(simulation.parcels, t.pos); target != nil {
+		// 	if target.weight > availableLoad {
+		// 		t.startDelivery()
+		// 	}
+		// }
+	case Away:
+		t.awayLeft--
+		if t.awayLeft == 0 {
+			t.load = 0
+			t.status = Loading
+		}
+	}
 }
