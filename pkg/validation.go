@@ -33,9 +33,20 @@ func VerifySimulationValidity(simulation Simulation) error {
 	if len(simulation.warehouse.trucks) == 0 {
 		return errAtLeastOneTruck
 	}
+
+	err := checkWarehouseSize(simulation.warehouse)
+	if err != nil {
+		return err
+	}
+
+	err = ensureTrucksAreOnAWarehouseSide(simulation.warehouse.trucks, simulation.warehouse)
+	if err != nil {
+		return err
+	}
+
 	entities := makeEntitiesArray(simulation)
 
-	err := checkForOutOfWarehouseBoundEntity(entities, simulation.warehouse)
+	err = checkForOutOfWarehouseBoundEntity(entities, simulation.warehouse)
 	if err != nil {
 		return err
 	}
@@ -46,6 +57,61 @@ func VerifySimulationValidity(simulation Simulation) error {
 	}
 
 	return ensureForDuplicatedEntitiyName(entities)
+}
+
+type tooSmallWarehouseError struct {
+	size gridUnit
+}
+
+func (err tooSmallWarehouseError) Error() string {
+	return fmt.Sprintf("too small warehouse (%d)", err.size)
+}
+
+func checkWarehouseSize(warehouse warehouse) error {
+	size := warehouse.length * warehouse.width
+	var minimumWarehouseSize gridUnit = 2
+
+	if size < minimumWarehouseSize {
+		return tooSmallWarehouseError{size: size}
+	}
+	return nil
+}
+
+type notOnSideTrucksError struct {
+	trucks []truck
+}
+
+func (err notOnSideTrucksError) Error() string {
+	output := fmt.Sprintf("Error found %d truck(s) not on a side of the warehouse:\n", len(err.trucks))
+
+	trucks := make([]string, 0, len(err.trucks))
+	for _, truck := range err.trucks {
+		trucks = append(trucks, fmt.Sprintf("  %s: %s", truck.coordinate, truck.name))
+	}
+
+	output += strings.Join(trucks, "\n")
+	return output
+}
+
+func ensureTrucksAreOnAWarehouseSide(trucks []truck, warehouse warehouse) error {
+	min := coordinate{}
+	max := coordinate{X: warehouse.width - 1, Y: warehouse.length - 1}
+
+	errTrucks := make([]truck, 0)
+	for _, truck := range trucks {
+		isOnLeftOrRightSize := truck.X == min.X || truck.X == max.X
+		isOnTopOrBottomSize := truck.Y == min.Y || truck.Y == max.Y
+		isOnASide := isOnLeftOrRightSize || isOnTopOrBottomSize
+
+		if !isOnASide {
+			errTrucks = append(errTrucks, truck)
+		}
+	}
+
+	if len(errTrucks) > 0 {
+		return notOnSideTrucksError{trucks: errTrucks}
+	}
+	return nil
 }
 
 func makeEntitiesArray(simulation Simulation) []entity {

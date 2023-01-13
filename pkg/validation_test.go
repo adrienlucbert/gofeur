@@ -20,6 +20,8 @@ func TestVerifySimulationValidity(t *testing.T) {
 		{
 			input: Simulation{
 				warehouse: warehouse{
+					length: 5,
+					width:  5,
 					forklifts: []forklift{
 						{name: "forklift"},
 					},
@@ -31,7 +33,7 @@ func TestVerifySimulationValidity(t *testing.T) {
 			input: Simulation{
 				warehouse: warehouse{
 					width:  1,
-					length: 1,
+					length: 2,
 					forklifts: []forklift{
 						{name: "forklift", coordinate: coordinate{X: 4}},
 					},
@@ -46,7 +48,7 @@ func TestVerifySimulationValidity(t *testing.T) {
 			input: Simulation{
 				warehouse: warehouse{
 					width:  1,
-					length: 1,
+					length: 2,
 					forklifts: []forklift{
 						{name: "forklift", coordinate: coordinate{X: 0, Y: 0}},
 					},
@@ -67,6 +69,21 @@ func TestVerifySimulationValidity(t *testing.T) {
 					},
 					trucks: []truck{
 						{name: "entity"},
+					},
+				},
+			},
+			hasError: true,
+		},
+		{
+			input: Simulation{
+				warehouse: warehouse{
+					width:  6,
+					length: 6,
+					forklifts: []forklift{
+						{name: "forklift", coordinate: coordinate{X: 1}},
+					},
+					trucks: []truck{
+						{name: "truck", coordinate: coordinate{X: 4, Y: 4}},
 					},
 				},
 			},
