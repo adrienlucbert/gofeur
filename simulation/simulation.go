@@ -2,9 +2,8 @@
 package simulation
 
 import (
-	"fmt"
-
 	"github.com/adrienlucbert/gofeur/board"
+	"github.com/adrienlucbert/gofeur/logger"
 	"github.com/adrienlucbert/gofeur/parsing"
 	"github.com/adrienlucbert/gofeur/pkg"
 )
@@ -103,7 +102,7 @@ func (s *Simulation) updateBoard() {
 }
 
 func (s *Simulation) simulateRound() {
-	fmt.Printf("Round %d\n", s.Round+1)
+	logger.Debug("Round %d\n", s.Round+1)
 	for i := range s.forklifts {
 		s.forklifts[i].simulateRound(s)
 	}
@@ -111,7 +110,7 @@ func (s *Simulation) simulateRound() {
 		s.trucks[i].simulateRound(s)
 	}
 	s.updateBoard()
-	fmt.Printf("%s\n", s.board.String())
+	logger.Debug("%s\n", s.board.String())
 
 	// Increment round and end simulation if needed
 	s.Round++

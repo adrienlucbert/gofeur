@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/adrienlucbert/gofeur/config"
+	"github.com/adrienlucbert/gofeur/logger"
 	"github.com/adrienlucbert/gofeur/parsing"
 	"github.com/adrienlucbert/gofeur/pkg"
 	"github.com/adrienlucbert/gofeur/simulation"
@@ -27,7 +29,12 @@ func getFileContent(file string) (*os.File, *bufio.Scanner) {
 func main() {
 	filename := flag.String("filename", "", "Map file path")
 	displayUI := flag.Bool("ui", false, "Display UI")
+	logLevel := flag.String("log-level", "Debug", "Log level (Debug, Info, Warn, Error, None)")
 	flag.Parse()
+
+	config.Set("displayUI", displayUI)
+	logger.SetLogLevel(*logLevel)
+
 	if *filename == "" {
 		panic("missing input file")
 	}

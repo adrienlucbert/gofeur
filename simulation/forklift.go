@@ -2,8 +2,8 @@ package simulation
 
 import (
 	"errors"
-	"fmt"
 
+	"github.com/adrienlucbert/gofeur/logger"
 	"github.com/adrienlucbert/gofeur/optional"
 	"github.com/adrienlucbert/gofeur/parsing"
 	"github.com/adrienlucbert/gofeur/pathfinding"
@@ -92,14 +92,14 @@ func (f *forklift) simulateRound(simulation *Simulation) {
 	case Empty:
 		if !f.target.HasValue() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
 			if err := f.findTarget(simulation); err != nil {
-				fmt.Printf("%s\n", err.Error())
+				logger.Error("%s\n", err.Error())
 				return
 			}
 		}
 		if len(f.path.Value()) <= 1 {
-			fmt.Print("GRAB\n")
+			logger.Debug("GRAB\n")
 			if err := f.grabParcel(f.target.Value()); err != nil {
-				fmt.Printf("%s\n", err.Error())
+				logger.Error("%s\n", err.Error())
 				return
 			}
 			return
