@@ -11,7 +11,6 @@ import (
 
 type history struct {
 	book          []string
-	building      [][][]any
 	pastSelection int
 	IsRowSelected bool
 }
@@ -37,6 +36,7 @@ func addElementsToBuilding[T any](elements []T, building [][]any) {
 	}
 }
 
+// UIStart instantiate UI Application and setup its environment
 func UIStart(st Startup, sb StorageBuilding) *UI {
 	app := tview.NewApplication()
 
@@ -130,6 +130,7 @@ func (ui *UI) initUI() {
 	ui.historic.IsRowSelected = false
 }
 
+// DumpActionInStateBox Display the given element and action in the state box
 func (ui *UI) DumpActionInStateBox(elem any, action string) {
 	fmt.Fprintf(ui.StateBox, "%s %s\n", fmt.Sprint(elem), action)
 	actuState := fmt.Sprintf("%s %s\n", fmt.Sprint(elem), action)

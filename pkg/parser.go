@@ -42,7 +42,7 @@ func factory[T any](elem T, args ...string) {
 			} else {
 				panic("Error: factory, cannot SetUint")
 			}
-		case "color_t":
+		case "color":
 			field.SetUint(uint64(colorToUint8(arg)))
 		default:
 			field.SetString(arg)

@@ -31,5 +31,5 @@ func main() {
 
 	gofeur.Init()
 	go pkg.Logic(gofeur)
-	gofeur.Run()
+	gofeur.RunUI()
 }

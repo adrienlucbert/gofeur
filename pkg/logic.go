@@ -9,7 +9,7 @@ import (
 
 // Logic entrypoint for running the algorithm and update the UI
 func Logic(gofeur *Gofeur) {
-	ui := gofeur.Ui
+	ui := gofeur.ui
 	str := "Go "
 	count := 0
 
@@ -20,7 +20,7 @@ func Logic(gofeur *Gofeur) {
 		} else {
 			ui.OutputBox.SetTitle(fmt.Sprintf("%s FEUR...", str))
 		}
-		if gofeur.Ui.historic.IsRowSelected == false {
+		if !gofeur.ui.historic.IsRowSelected {
 			if count == 2 {
 				ui.DumpActionInStateBox(gofeur.sb.Forklifts[0], "TEST")
 			} else {
