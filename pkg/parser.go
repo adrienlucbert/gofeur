@@ -152,7 +152,7 @@ func parseFromReader(reader io.Reader) (Simulation, error) {
 	var err parserError
 
 	for parser.mayBeParsedByNextSection || scanner.Scan() {
-		if err == nil && !parser.mayBeParsedByNextSection {
+		if !parser.mayBeParsedByNextSection {
 			parser.line++
 			line := scanner.Text()
 			parser.tokens = strings.Split(line, " ")
@@ -171,27 +171,9 @@ func parseFromReader(reader io.Reader) (Simulation, error) {
 				}
 			}
 			parser.section = getNextSection(parser.section).Value()
-		case "parcel":
-			var parcel parcel
-			parcel, err = parseParcel(parser.tokens)
 
-			if err == nil {
-				simul.warehouse.parcels = append(simul.warehouse.parcels, parcel)
-			}
-		case "forklift":
-			var forklift forklift
-			forklift, err = parseForklift(parser.tokens)
-
-			if err == nil {
-				simul.warehouse.forklifts = append(simul.warehouse.forklifts, forklift)
-			}
-		case "truck":
-			var truck truck
-			truck, err = parseTruck(parser.tokens)
-
-			if err == nil {
-				simul.warehouse.trucks = append(simul.warehouse.trucks, truck)
-			}
+		default:
+			err = parseWarehouseEntity(parser.section, parser.tokens, &simul.warehouse)
 		}
 
 		if err != nil {
@@ -202,7 +184,7 @@ func parseFromReader(reader io.Reader) (Simulation, error) {
 					parser.section = nextSection.Value()
 					parser.mayBeParsedByNextSection = true
 				} else {
-					return simul, inputError{
+					return Simulation{}, inputError{
 						line:    parser.line,
 						section: parser.section,
 						err:     errInvalidLine,
@@ -215,13 +197,13 @@ func parseFromReader(reader io.Reader) (Simulation, error) {
 	}
 
 	if err != nil {
-		return simul, inputError{
+		return Simulation{}, inputError{
 			line:    parser.line,
 			section: parser.section,
 			err:     err,
 		}
 	}
-	return simul, err
+	return simul, nil
 }
 
 func getNextSection(section string) optional.Optional[string] {
@@ -258,6 +240,36 @@ func parseWarehouseSection(tokens []string) (Simulation, parserError) {
 
 	err := parseTokens(tokens, warehouseTokenParsers)
 	return simul, err
+}
+
+func parseWarehouseEntity(section string, tokens []string, warehouse *warehouse) parserError {
+	var err parserError
+
+	switch section {
+	case "parcel":
+		var parcel parcel
+		parcel, err = parseParcel(tokens)
+
+		if err == nil {
+			warehouse.parcels = append(warehouse.parcels, parcel)
+		}
+	case "forklift":
+		var forklift forklift
+		forklift, err = parseForklift(tokens)
+
+		if err == nil {
+			warehouse.forklifts = append(warehouse.forklifts, forklift)
+		}
+	case "truck":
+		var truck truck
+		truck, err = parseTruck(tokens)
+
+		if err == nil {
+			warehouse.trucks = append(warehouse.trucks, truck)
+		}
+	}
+
+	return err
 }
 
 func parseParcel(tokens []string) (parcel, parserError) {
