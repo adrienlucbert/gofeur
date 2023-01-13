@@ -30,6 +30,6 @@ func main() {
 	gofeur := pkg.ParseFile(f)
 
 	gofeur.Init()
-	go pkg.Logic(gofeur.Ui)
+	go pkg.Logic(gofeur)
 	gofeur.Run()
 }

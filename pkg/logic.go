@@ -8,9 +8,11 @@ import (
 )
 
 // Logic entrypoint for running the algorithm and update the UI
-func Logic(ui *UI) {
+func Logic(gofeur *Gofeur) {
+	ui := gofeur.Ui
 	str := "Go "
 	count := 0
+
 	for {
 		time.Sleep(1 * time.Second)
 		if count%2 == 0 {
@@ -18,8 +20,15 @@ func Logic(ui *UI) {
 		} else {
 			ui.OutputBox.SetTitle(fmt.Sprintf("%s FEUR...", str))
 		}
-		ui.OutputBox.SetCell(count, 0, tview.NewTableCell(fmt.Sprintf("round %d\n", count)))
-		count++
+		if gofeur.Ui.historic.IsRowSelected == false {
+			if count == 2 {
+				ui.DumpActionInStateBox(gofeur.sb.Forklifts[0], "TEST")
+			} else {
+				ui.DumpActionInStateBox(gofeur.sb.Trucks[0], "WAINTING")
+			}
+			ui.OutputBox.SetCell(count, 0, tview.NewTableCell(fmt.Sprintf("round %d\n", count)))
+			count++
+		}
 		ui.App.Draw()
 	}
 }
