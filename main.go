@@ -7,7 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/adrienlucbert/gofeur/parsing"
 	"github.com/adrienlucbert/gofeur/pkg"
+	"github.com/adrienlucbert/gofeur/simulation"
+	"github.com/adrienlucbert/gofeur/ui"
 )
 
 func getFileContent(file string) (*os.File, *bufio.Scanner) {
@@ -31,20 +34,20 @@ func main() {
 	fd, f := getFileContent(*filename)
 	defer fd.Close()
 
-	gofeur := pkg.ParseFile(f)
-	simulation := pkg.NewSimulation(gofeur)
+	gofeur := parsing.ParseFile(f)
+	sim := simulation.New(gofeur)
 
 	layers := []pkg.Layer{
-		&pkg.LogicLayer{Simulation: &simulation},
+		&simulation.Layer{Simulation: &sim},
 	}
 	if *displayUI {
-		layers = append(layers, &pkg.UILayer{Gofeur: gofeur, Simulation: &simulation})
+		layers = append(layers, &ui.Layer{Gofeur: gofeur, Simulation: &sim})
 	}
 	for _, layer := range layers {
 		layer.Attach()
 	}
 	lastUpdateTime := time.Now()
-	for simulation.Status == pkg.Running {
+	for sim.IsRunning() {
 		updateTime := time.Now()
 		elapsedTime := updateTime.Sub(lastUpdateTime)
 		lastUpdateTime = updateTime

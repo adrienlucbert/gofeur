@@ -1,14 +1,14 @@
-package pkg
+package parsing
 
 import (
 	"fmt"
 )
 
-type color_t uint8
+type Color uint8
 
 const (
-	Green color_t = iota
-	Yellow
+	Yellow Color = iota
+	Green
 	Blue
 )
 
@@ -46,7 +46,7 @@ type Parcel struct {
 	Name  string
 	X     uint
 	Y     uint
-	Color color_t
+	Color Color
 }
 
 func (t Forklift) String() string {
@@ -69,6 +69,6 @@ func (p Parcel) String() string {
 }
 
 type Gofeur struct {
-	st Startup
-	sb StorageBuilding
+	ST Startup
+	SB StorageBuilding
 }

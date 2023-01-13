@@ -4,8 +4,8 @@ package pathfinding
 import (
 	"errors"
 
+	"github.com/adrienlucbert/gofeur/board"
 	"github.com/adrienlucbert/gofeur/optional"
-	"github.com/adrienlucbert/gofeur/pathfinding/board"
 	"github.com/adrienlucbert/gofeur/pkg"
 )
 

@@ -1,26 +1,26 @@
-package pkg
+package simulation
 
 import (
 	"time"
 )
 
-// LogicLayer is the application layer responsible for managing the game logic
-type LogicLayer struct {
+// Layer is the application layer responsible for managing the game logic
+type Layer struct {
 	Simulation *Simulation
 }
 
 // Attach initializes the LogicLayer
-func (layer *LogicLayer) Attach() {
+func (layer *Layer) Attach() {
 	layer.Simulation.start()
 }
 
 // Update runs the game logic
-func (layer *LogicLayer) Update(elapsedTime time.Duration) {
+func (layer *Layer) Update(elapsedTime time.Duration) {
 	layer.Simulation.simulateRound()
 }
 
 // Detach handles the game end
-func (layer *LogicLayer) Detach() {
+func (layer *Layer) Detach() {
 	layer.Simulation.terminate()
 	// TODO: print end-of-game data
 }

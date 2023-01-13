@@ -3,7 +3,7 @@ package pathfinding
 import (
 	"testing"
 
-	"github.com/adrienlucbert/gofeur/pathfinding/board"
+	"github.com/adrienlucbert/gofeur/board"
 	"github.com/adrienlucbert/gofeur/pkg"
 	"github.com/stretchr/testify/assert"
 )

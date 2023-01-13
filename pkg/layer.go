@@ -1,3 +1,4 @@
+// Package pkg provides common utils
 package pkg
 
 import "time"

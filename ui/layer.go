@@ -1,20 +1,22 @@
-package pkg
+package ui
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/adrienlucbert/gofeur/parsing"
+	"github.com/adrienlucbert/gofeur/simulation"
 	"github.com/rivo/tview"
 )
 
-// UILayer is an optional application layer responsible for displaying the UI
-type UILayer struct {
-	Gofeur     *Gofeur
-	Simulation *Simulation
+// Layer is an optional application layer responsible for displaying the UI
+type Layer struct {
+	Gofeur     *parsing.Gofeur
+	Simulation *simulation.Simulation
 	ui         *UI
 }
 
-func (layer *UILayer) run() {
+func (layer *Layer) run() {
 	err := layer.ui.App.SetRoot(layer.ui.Layout, true).
 		EnableMouse(true).
 		Run()
@@ -24,13 +26,13 @@ func (layer *UILayer) run() {
 }
 
 // Attach initializes the UILayer
-func (layer *UILayer) Attach() {
-	layer.ui = UIStart(layer.Gofeur.st, layer.Gofeur.sb)
+func (layer *Layer) Attach() {
+	layer.ui = UIStart(layer.Gofeur.ST, layer.Gofeur.SB)
 	go layer.run()
 }
 
 // Update updates the UI and re-renders it
-func (layer *UILayer) Update(elapsedTime time.Duration) {
+func (layer *Layer) Update(elapsedTime time.Duration) {
 	if layer.Simulation.Round%2 == 0 {
 		layer.ui.OutputBox.SetTitle("Go QUOI?")
 	} else {
@@ -41,6 +43,6 @@ func (layer *UILayer) Update(elapsedTime time.Duration) {
 }
 
 // Detach dismounts the UILayer
-func (layer *UILayer) Detach() {
+func (layer *Layer) Detach() {
 	layer.ui.App.Stop()
 }

@@ -1,4 +1,4 @@
-package pkg
+package parsing
 
 import (
 	"bufio"
@@ -42,7 +42,7 @@ func factory[T any](elem T, args ...string) {
 			} else {
 				panic("Error: factory, cannot SetUint")
 			}
-		case "color_t":
+		case "Color":
 			field.SetUint(uint64(colorToUint8(arg)))
 		default:
 			field.SetString(arg)
@@ -55,24 +55,24 @@ func parseLine(index int, line string, gofeur *Gofeur) {
 
 	switch index {
 	case STARTUP:
-		if (Startup{}) != gofeur.st {
+		if (Startup{}) != gofeur.ST {
 			fmt.Println(`Startup values has already been initialized, 
             the line will be ignored`)
 			return
 		}
-		factory(&gofeur.st, splitted...)
+		factory(&gofeur.ST, splitted...)
 	case PARCEL:
 		newParcel := Parcel{}
 		factory(&newParcel, splitted...)
-		gofeur.sb.Packs = append(gofeur.sb.Packs, newParcel)
+		gofeur.SB.Packs = append(gofeur.SB.Packs, newParcel)
 	case FORKLIFT:
 		newForklift := Forklift{}
 		factory(&newForklift, splitted...)
-		gofeur.sb.Forklifts = append(gofeur.sb.Forklifts, newForklift)
+		gofeur.SB.Forklifts = append(gofeur.SB.Forklifts, newForklift)
 	case TRUCK:
 		newTruck := Truck{}
 		factory(&newTruck, splitted...)
-		gofeur.sb.Trucks = append(gofeur.sb.Trucks, newTruck)
+		gofeur.SB.Trucks = append(gofeur.SB.Trucks, newTruck)
 	}
 }
 
