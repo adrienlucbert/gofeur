@@ -11,14 +11,6 @@ var (
 	errAtLeastOneTruck    = errors.New("Please provide at least one truck")
 )
 
-type dupPropertyError struct {
-	dupPropertiesEntities []string
-}
-
-func (err dupPropertyError) Error() string {
-	return strings.Join(err.dupPropertiesEntities, "\n")
-}
-
 // VerifySimulationValidity return an error if one of the following condition is meet:
 //
 //   - there is no forklift in `simulation`
@@ -185,6 +177,30 @@ func ensureForDuplicatedEntitiyName(entities []entity) error {
 	return nil
 }
 
+type dupEntityError[T interface {
+	fmt.Stringer
+	comparable
+}] struct {
+	propertiesEntities map[T][]*entity
+}
+
+func (err dupEntityError[T]) Error() string {
+	output := make([]string, 0, len(err.propertiesEntities))
+
+	for property, entities := range err.propertiesEntities {
+		errEntities := make([]string, 0, len(entities))
+		for _, entity := range entities {
+			kind := (*entity).Kind()
+			name := (*entity).Name()
+
+			errEntities = append(errEntities, fmt.Sprintf("%s: %s", kind, name))
+		}
+		output = append(output, fmt.Sprintf("%s: %s", property, strings.Join(errEntities, ", ")))
+	}
+
+	return strings.Join(output, "\n")
+}
+
 func hasEntityPropertyDup[T interface {
 	comparable
 	fmt.Stringer
@@ -208,18 +224,7 @@ func hasEntityPropertyDup[T interface {
 	}
 
 	if len(board) != 0 {
-		err := make([]string, 0, len(board))
-		for property, entities := range board {
-			errEntities := make([]string, 0, len(entities))
-			for _, entity := range entities {
-				kind := (*entity).Kind()
-				name := (*entity).Name()
-
-				errEntities = append(errEntities, fmt.Sprintf("%s: %s", kind, name))
-			}
-			err = append(err, fmt.Sprintf("%s: %s", property, strings.Join(errEntities, ", ")))
-		}
-		return dupPropertyError{dupPropertiesEntities: err}
+		return dupEntityError[T]{propertiesEntities: board}
 	}
 	return nil
 }
