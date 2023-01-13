@@ -151,6 +151,16 @@ func TestParseWarehouseSection(t *testing.T) {
 			errorKind: invalidUnsignedInteger,
 		},
 		{
+			input:     []string{"1", "1", "9"},
+			hasError:  true,
+			errorKind: invalidCycleNumber,
+		},
+		{
+			input:     []string{"1", "1", "100001"},
+			hasError:  true,
+			errorKind: invalidCycleNumber,
+		},
+		{
 			input:    []string{"453", "4952", "34"},
 			hasError: false,
 			expectedOutput: Simulation{

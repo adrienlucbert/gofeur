@@ -35,6 +35,7 @@ const (
 	invalidTokenLength parserErrorKind = iota
 	invalidNumberOfTokens
 	invalidUnsignedInteger
+	invalidCycleNumber
 	invalidWeight
 )
 
@@ -63,6 +64,8 @@ func (kind parserErrorKind) ToString() string {
 		return "invalid unsigned integer"
 	case invalidWeight:
 		return "invalid weight"
+	case invalidCycleNumber:
+		return "invalid cycle number"
 	default:
 		panic("Unreachable")
 	}
@@ -248,7 +251,7 @@ func parseWarehouseSection(tokens []string) (Simulation, parserError) {
 			value:     &simul.warehouse.length,
 		},
 		{
-			fieldName: "length",
+			fieldName: "cycle",
 			value:     &simul.cycle,
 		},
 	}
@@ -372,6 +375,8 @@ func parseToken(token string, kind tokenKind, value any) error {
 		err = parseStringToken(token, kind, ptr)
 	case *uint32:
 		err = parseUint32Token(token, kind, ptr)
+	case *simulationCycle:
+		err = parseSimulationCycleToken(token, kind, ptr)
 	case *gridUnit:
 		err = parseUnitToken(token, kind, ptr)
 	case *weight:
@@ -402,6 +407,19 @@ func parseUint32Token(token string, _ tokenKind, ptr *uint32) parserError {
 
 	if err == nil {
 		*ptr = value
+		return nil
+	}
+	return tokenError{kind: invalidUnsignedInteger, err: err.Error()}
+}
+
+func parseSimulationCycleToken(token string, _ tokenKind, ptr *simulationCycle) parserError {
+	value, err := parseUint32Field(token)
+
+	if err == nil {
+		if value < 10 || value > 100000 {
+			return tokenError{kind: invalidCycleNumber, err: "should be between 10 and 100_000"}
+		}
+		*ptr = simulationCycle(value)
 		return nil
 	}
 	return tokenError{kind: invalidUnsignedInteger, err: err.Error()}
