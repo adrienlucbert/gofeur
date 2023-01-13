@@ -4,11 +4,18 @@ package ui
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/adrienlucbert/gofeur/parsing"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
+
+type history struct {
+	book          []string
+	pastSelection int
+	IsRowSelected bool
+}
 
 // UI est la struct regroupant tous les composants du TUI
 type UI struct {
@@ -19,6 +26,7 @@ type UI struct {
 	StateBox             *tview.TextView
 	Layout               *tview.Flex
 	building             [][]any
+	historic             history
 }
 
 func addElementsToBuilding[T any](elements []T, building [][]any) {
@@ -30,6 +38,7 @@ func addElementsToBuilding[T any](elements []T, building [][]any) {
 	}
 }
 
+// UIStart instantiate UI Application and setup its environment
 func UIStart(st parsing.Startup, sb parsing.StorageBuilding) *UI {
 	app := tview.NewApplication()
 
@@ -53,6 +62,7 @@ func UIStart(st parsing.Startup, sb parsing.StorageBuilding) *UI {
 
 	ui.initUI()
 	ui.updateStorageBuildingTable(w, l)
+	ui.updateOutputBox()
 	return ui
 }
 
@@ -105,6 +115,12 @@ func (ui *UI) initUI() {
 			ui.App.Stop()
 			return nil
 		}
+		if event.Key() == tcell.KeyRight {
+			ui.historic.IsRowSelected = false
+			ui.StateBox.Clear()
+			pastHistory := strings.Join(ui.historic.book, "")
+			fmt.Fprint(ui.StateBox, pastHistory)
+		}
 		return event
 	})
 
@@ -113,6 +129,23 @@ func (ui *UI) initUI() {
 	ui.OutputBox = outputBox
 	ui.StateBox = stateBox
 	ui.Layout = globalLayout
+	ui.historic.IsRowSelected = false
+}
+
+// DumpActionInStateBox Display the given element and action in the state box
+func (ui *UI) DumpActionInStateBox(elem any, action string) {
+	fmt.Fprintf(ui.StateBox, "%s %s\n", fmt.Sprint(elem), action)
+	actuState := fmt.Sprintf("%s %s\n", fmt.Sprint(elem), action)
+	ui.historic.book = append(ui.historic.book, actuState)
+}
+
+func (ui *UI) updateOutputBox() {
+	ui.OutputBox.SetSelectionChangedFunc(func(row, col int) {
+		ui.StateBox.Clear()
+		fmt.Fprintf(ui.StateBox, "row %s\n", ui.historic.book[row])
+		ui.historic.IsRowSelected = true
+		ui.historic.pastSelection = row
+	})
 }
 
 func (ui *UI) updateStorageBuildingTable(x, y int) {

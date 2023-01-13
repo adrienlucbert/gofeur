@@ -38,11 +38,20 @@ func (layer *Layer) Update(elapsedTime time.Duration) {
 	} else {
 		layer.ui.OutputBox.SetTitle("Go FEUR...")
 	}
-	layer.ui.OutputBox.SetCell(int(layer.Simulation.Round), 0, tview.NewTableCell(fmt.Sprintf("round %d\n", layer.Simulation.Round)))
+	if !layer.ui.historic.IsRowSelected {
+		if layer.Simulation.Round == 2 {
+			layer.ui.DumpActionInStateBox(layer.Gofeur.SB.Forklifts[0], "TEST")
+		} else {
+			layer.ui.DumpActionInStateBox(layer.Gofeur.SB.Trucks[0], "WAITING")
+		}
+		layer.ui.OutputBox.SetCell(int(layer.Simulation.Round), 0, tview.NewTableCell(fmt.Sprintf("round %d\n", layer.Simulation.Round)))
+	}
 	layer.ui.App.Draw()
+	// time.Sleep(1 * time.Second) // REMOVE:
 }
 
 // Detach dismounts the UILayer
 func (layer *Layer) Detach() {
+	// time.Sleep(500 * time.Second) // REMOVE:
 	layer.ui.App.Stop()
 }

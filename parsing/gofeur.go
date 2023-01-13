@@ -12,24 +12,28 @@ const (
 	Blue
 )
 
+// Startup struct define the 1st line of the file given to the program
 type Startup struct {
 	Width  uint
 	Length uint
 	Rounds uint
 }
 
+// StorageBuilding struct is a basic representation of the environment
 type StorageBuilding struct {
 	Forklifts []Forklift
 	Packs     []Parcel
 	Trucks    []Truck
 }
 
+// Forklift struct
 type Forklift struct {
 	Name string
 	X    uint
 	Y    uint
 }
 
+// Truck struct
 type Truck struct {
 	Name   string
 	X      uint
@@ -42,6 +46,7 @@ func (t Truck) String() string {
 	return "T"
 }
 
+// Parcel struct
 type Parcel struct {
 	Name  string
 	X     uint
@@ -68,6 +73,7 @@ func (p Parcel) String() string {
 	return fmt.Sprintf("%sP%s", str, white)
 }
 
+// Gofeur base struct that is logic entrypoint to the other struct of the program
 type Gofeur struct {
 	ST Startup
 	SB StorageBuilding
