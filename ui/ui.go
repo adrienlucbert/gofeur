@@ -1,10 +1,12 @@
-package pkg
+// Package ui provides UI capabilities
+package ui
 
 import (
 	"fmt"
 	"reflect"
 	"strings"
 
+	"github.com/adrienlucbert/gofeur/parsing"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -37,7 +39,7 @@ func addElementsToBuilding[T any](elements []T, building [][]any) {
 }
 
 // UIStart instantiate UI Application and setup its environment
-func UIStart(st Startup, sb StorageBuilding) *UI {
+func UIStart(st parsing.Startup, sb parsing.StorageBuilding) *UI {
 	app := tview.NewApplication()
 
 	ui := &UI{

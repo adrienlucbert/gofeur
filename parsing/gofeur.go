@@ -1,16 +1,14 @@
-// Package pkg implements everything relative to the project and so on and so forthgofgo
-package pkg
+package parsing
 
 import (
 	"fmt"
 )
 
-type color uint8
+type Color uint8
 
-// color iota
 const (
-	Green = iota
-	Yellow
+	Yellow Color = iota
+	Green
 	Blue
 )
 
@@ -53,7 +51,7 @@ type Parcel struct {
 	Name  string
 	X     uint
 	Y     uint
-	Color color
+	Color Color
 }
 
 func (t Forklift) String() string {
@@ -77,23 +75,6 @@ func (p Parcel) String() string {
 
 // Gofeur base struct that is logic entrypoint to the other struct of the program
 type Gofeur struct {
-	ui *UI
-	st Startup
-	sb StorageBuilding
-}
-
-// Init the program and UI
-func (gofeur *Gofeur) Init() {
-	gofeur.ui = UIStart(gofeur.st, gofeur.sb)
-}
-
-// RunUI the UI
-func (gofeur *Gofeur) RunUI() {
-	feurUI := gofeur.ui
-
-	if err := feurUI.App.SetRoot(feurUI.Layout, true).
-		EnableMouse(true).
-		Run(); err != nil {
-		panic(err)
-	}
+	ST Startup
+	SB StorageBuilding
 }
