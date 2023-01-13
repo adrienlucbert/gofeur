@@ -43,6 +43,9 @@ func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
 	var closestParcel *parcel
 	var closestParcelDistance float32
 	for i := range parcels {
+		if parcels[i].carried {
+			continue
+		}
 		parcel := &parcels[i]
 		parcelDistance := pos.SquaredDistance(parcel.pos)
 		if closestParcel == nil || parcelDistance < closestParcelDistance {
@@ -79,6 +82,9 @@ func New(gofeur *parsing.Gofeur) Simulation {
 func (s *Simulation) updateBoard() {
 	s.board.Clear()
 	for i := range s.parcels {
+		if s.parcels[i].carried {
+			continue
+		}
 		s.board.At(uint(s.parcels[i].pos.X), uint(s.parcels[i].pos.Y)).Blocked = true
 		s.board.At(uint(s.parcels[i].pos.X), uint(s.parcels[i].pos.Y)).DebugChar = map[uint]rune{
 			100: '1',

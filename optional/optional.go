@@ -29,6 +29,11 @@ func (o Optional[T]) Value() T {
 	return *o.ptr
 }
 
+// Clear sets the value held in the optional to nil.
+func (o *Optional[T]) Clear() {
+	o.ptr = nil
+}
+
 // Set sets the value held in the optional.
 func (o *Optional[T]) Set(v T) {
 	o.ptr = &v

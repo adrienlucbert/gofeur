@@ -6,9 +6,10 @@ import (
 )
 
 type parcel struct {
-	name   string
-	pos    pkg.Vector
-	weight uint
+	name    string
+	pos     pkg.Vector
+	weight  uint
+	carried bool
 }
 
 func newParcelFromParsing(from *parsing.Parcel) parcel {

@@ -10,26 +10,40 @@ import (
 	"github.com/adrienlucbert/gofeur/pkg"
 )
 
+// ForkLiftStatus represents the forklift's possible states
+type ForkLiftStatus int
+
+const (
+	// Empty is the forklift's state when it carries no parcel
+	Empty ForkLiftStatus = iota
+	// Loaded is the forklift's state when it carries a parcel
+	Loaded
+)
+
 type forklift struct {
-	name string
-	pos  pkg.Vector
-	// TODO: load uint
-	// TODO: state [LOADED|EMPTY]
+	name   string
+	pos    pkg.Vector
+	parcel optional.Optional[*parcel]
+	state  ForkLiftStatus
 	target optional.Optional[*parcel]
 	path   optional.Optional[[]pkg.Vector]
 }
 
 func newForkliftFromParsing(from *parsing.Forklift) forklift {
 	return forklift{
-		name: from.Name,
-		pos:  pkg.Vector{X: int(from.X), Y: int(from.Y)},
+		name:   from.Name,
+		pos:    pkg.Vector{X: int(from.X), Y: int(from.Y)},
+		parcel: optional.NewEmpty[*parcel](),
+		state:  Empty,
+		target: optional.NewEmpty[*parcel](),
+		path:   optional.NewEmpty[[]pkg.Vector](),
 	}
 }
 
-// errPathNotFound is returned when a path couldn't be found
 var errParcelNotFound = errors.New("No closest parcel found")
 
 func (f *forklift) findTarget(simulation *Simulation) error {
+	// PERF: don't refetch target if not reached
 	f.target.Set(findClosestParcel(simulation.parcels, f.pos))
 	if !f.target.HasValue() {
 		return errParcelNotFound
@@ -44,16 +58,55 @@ func (f *forklift) findTarget(simulation *Simulation) error {
 	return nil
 }
 
+var errForkliftAlreadyLoaded = errors.New("Forklift already loaded")
+
+func (f *forklift) grabParcel(parcel *parcel) error {
+	if f.state == Loaded {
+		return errForkliftAlreadyLoaded
+	}
+	f.target.Clear()
+	f.path.Clear()
+	f.parcel.Set(parcel)
+	f.state = Loaded
+	parcel.carried = true
+	return nil
+}
+
+var errForkliftEmpty = errors.New("Forklift is empty")
+var errTruckFull = errors.New("Truck is full")
+
+func (f *forklift) depositParcel(truck *truck) error {
+	if !f.parcel.HasValue() {
+		return errForkliftEmpty
+	}
+	if truck.load+f.parcel.Value().weight > truck.capacity {
+		return errTruckFull
+	}
+	truck.load += f.parcel.Value().weight
+	f.parcel.Clear()
+	return nil
+}
+
 func (f *forklift) simulateRound(simulation *Simulation) {
-	if !f.target.HasValue() {
-		if err := f.findTarget(simulation); err != nil {
-			fmt.Print(err.Error())
+	switch f.state {
+	case Empty:
+		if !f.target.HasValue() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
+			if err := f.findTarget(simulation); err != nil {
+				fmt.Printf("%s\n", err.Error())
+				return
+			}
+		}
+		if len(f.path.Value()) <= 1 {
+			fmt.Print("GRAB\n")
+			if err := f.grabParcel(f.target.Value()); err != nil {
+				fmt.Printf("%s\n", err.Error())
+				return
+			}
 			return
 		}
+		f.pos = f.path.Value()[0]
+		f.path.Set(f.path.Value()[1:])
+	case Loaded:
+		// TODO: go to nearest available truck
 	}
-	if len(f.path.Value()) <= 1 {
-		// TODO: pick up parcel
-		return
-	}
-	f.pos = f.path.Value()[0]
 }
