@@ -14,6 +14,11 @@ type truck struct {
 	// TODO: state [WAITING|GONE]
 }
 
+// Implement prop.Pos()
+func (t *truck) Pos() pkg.Vector {
+	return t.pos
+}
+
 func newTruckFromParsing(from *parsing.Truck) truck {
 	return truck{
 		name:     from.Name,
