@@ -22,7 +22,7 @@ entities live.
 ```bash
 go get # Fetch the dependencies
 bo build # Compile
-./gofeur input_file # See Input file section
+./gofeur -filename ./input_file # Run gofeur (See Input file section for the file format)
 ```
 
 ### Launch tests
