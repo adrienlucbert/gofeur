@@ -36,6 +36,11 @@ func main() {
 	logLevel := flag.String("log-level", "Info", "Log level (Debug, Info, Warn, Error, None)")
 	flag.Parse()
 
+	if *filename == "" {
+		flag.PrintDefaults()
+		return
+	}
+
 	config.Set("displayUI", displayUI)
 	logger.SetLogLevel(*logLevel)
 
