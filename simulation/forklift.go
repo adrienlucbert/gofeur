@@ -29,8 +29,7 @@ type forkliftAction interface {
 	fmt.Stringer
 }
 
-type forkliftWaitAction struct {
-}
+type forkliftWaitAction struct{}
 
 func (a forkliftWaitAction) String() string {
 	return "WAIT"
@@ -80,15 +79,25 @@ func newForkliftFromParsing(from *parsing.Forklift) forklift {
 	}
 }
 
-var errParcelNotFound = errors.New("No closest parcel found")
-var errTruckNotFound = errors.New("No closest truck found")
+var (
+	errParcelNotFound = errors.New("No closest parcel found")
+	errTruckNotFound  = errors.New("No closest truck found")
+)
+
+type pathToTargetError struct {
+	pathfinding error
+}
+
+func (err pathToTargetError) Error() string {
+	return fmt.Sprintf("No path to target: %s", err.pathfinding.Error())
+}
 
 func (f *forklift) findPathToTarget(simulation *Simulation) error {
 	simulation.board.At(uint(f.target.Value().Pos().X), uint(f.target.Value().Pos().Y)).Blocked = false
 	path, err := pathfinding.Resolve(&simulation.board, f.pos, f.target.Value().Pos())
 	simulation.board.At(uint(f.target.Value().Pos().X), uint(f.target.Value().Pos().Y)).Blocked = true
 	if err != nil {
-		return err
+		return pathToTargetError{pathfinding: err}
 	}
 	f.path.Set(path)
 	return nil
@@ -141,8 +150,10 @@ func (f *forklift) dropParcelFocus() {
 	f.path.Clear()
 }
 
-var errForkliftEmpty = errors.New("Forklift is empty")
-var errTruckFull = errors.New("Truck is full")
+var (
+	errForkliftEmpty = errors.New("Forklift is empty")
+	errTruckFull     = errors.New("Truck is full")
+)
 
 func (f *forklift) startDroppingParcel() error {
 	if !f.parcel.HasValue() {

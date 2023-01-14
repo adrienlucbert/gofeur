@@ -52,7 +52,7 @@ func (t *truck) startDelivery() {
 	t.awayLeft = t.awayTime
 }
 
-func (t *truck) simulateRound(simulation *Simulation) {
+func (t *truck) simulateRound(_ *Simulation) {
 	switch t.status {
 	case Loading:
 		if t.load > 0 {

@@ -38,8 +38,8 @@ func addElementsToBuilding[T any](elements []T, building [][]any) {
 	}
 }
 
-// UIStart instantiate UI Application and setup its environment
-func UIStart(st *parsing.Simulation) *UI {
+// Start instantiate UI Application and setup its environment
+func Start(st *parsing.Simulation) *UI {
 	app := tview.NewApplication()
 
 	ui := &UI{
