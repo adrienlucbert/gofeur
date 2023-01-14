@@ -173,6 +173,15 @@ as long as the **next path node is not obstructed** when the forklift needs to
 move. If that happens, **the nearest target is targeted** (most likely the same),
 and the **path is recalculated**.
 
+### C4 Model
+
+
+<p align="center">
+  <a>
+    <img alt="C4 Model" src="./c4model.png" style="width:500px;"/>
+  </a>
+</p>
+
 ## Credits
 
 This project is the work of [Fahad Assoumani](https://github.com/Nero-F),
