@@ -17,6 +17,10 @@ type ForkLiftStatus int
 const (
 	// Empty is the forklift's state when it carries no parcel
 	Empty ForkLiftStatus = iota
+	// Grabbing is the forklift's state when it's about to take a parcel
+	Grabbing
+	// Dropping is the forklift's state when it's about to drop a parcel
+	Dropping
 	// Loaded is the forklift's state when it carries a parcel
 	Loaded
 )
@@ -115,16 +119,20 @@ func (f *forklift) findClosestTruck(simulation *Simulation) error {
 
 var errForkliftAlreadyLoaded = errors.New("Forklift already loaded")
 
-func (f *forklift) grabParcel(parcel *parcel) error {
+func (f *forklift) startGrabbingParcel() error {
 	if f.status == Loaded {
 		return errForkliftAlreadyLoaded
 	}
+	f.status = Grabbing
+	return nil
+}
+
+func (f *forklift) finishGrabbingParcel() {
+	f.parcel.Set(f.target.Value().(*parcel))
+	f.parcel.Value().status = Carried
 	f.target.Clear()
 	f.path.Clear()
-	f.parcel.Set(parcel)
 	f.status = Loaded
-	parcel.status = Carried
-	return nil
 }
 
 func (f *forklift) dropParcelFocus() {
@@ -136,20 +144,26 @@ func (f *forklift) dropParcelFocus() {
 var errForkliftEmpty = errors.New("Forklift is empty")
 var errTruckFull = errors.New("Truck is full")
 
-func (f *forklift) depositParcel(truck *truck) error {
+func (f *forklift) startDroppingParcel() error {
 	if !f.parcel.HasValue() {
 		return errForkliftEmpty
 	}
+	truck := f.target.Value().(*truck)
 	if truck.load+f.parcel.Value().weight > truck.capacity {
 		return errTruckFull
 	}
-	f.parcel.Value().status = DroppedOff
+	f.status = Dropping
+	return nil
+}
+
+func (f *forklift) finishDroppingParcel() {
+	truck := f.target.Value().(*truck)
 	truck.load += f.parcel.Value().weight
 	f.target.Clear()
 	f.path.Clear()
+	f.parcel.Value().status = DroppedOff
 	f.parcel.Clear()
 	f.status = Empty
-	return nil
 }
 
 func (f *forklift) seekParcel(simulation *Simulation) forkliftAction {
@@ -163,10 +177,10 @@ func (f *forklift) seekParcel(simulation *Simulation) forkliftAction {
 		}
 	}
 	if len(f.path.Value()) <= 1 {
-		if err := f.grabParcel(f.target.Value().(*parcel)); err != nil {
+		if err := f.startGrabbingParcel(); err != nil {
 			logger.Debug("%s\n", err.Error())
 		}
-		return forkliftTakeAction{f.parcel.Value()}
+		return forkliftTakeAction{f.target.Value().(*parcel)}
 	}
 	dest := f.path.Value()[0]
 	f.pos = dest
@@ -182,11 +196,10 @@ func (f *forklift) seekTruck(simulation *Simulation) forkliftAction {
 		}
 	}
 	if len(f.path.Value()) <= 1 {
-		parcel := f.parcel.Value()
-		if err := f.depositParcel(f.target.Value().(*truck)); err != nil {
+		if err := f.startDroppingParcel(); err != nil {
 			logger.Debug("%s\n", err.Error())
 		}
-		return forkliftLeaveAction{parcel}
+		return forkliftLeaveAction{f.parcel.Value()}
 	}
 	dest := f.path.Value()[0]
 	f.pos = dest
@@ -197,8 +210,15 @@ func (f *forklift) seekTruck(simulation *Simulation) forkliftAction {
 func (f *forklift) simulateRound(simulation *Simulation) {
 	var action forkliftAction
 	switch f.status {
+	case Grabbing:
+		f.finishGrabbingParcel()
+	case Dropping:
+		f.finishDroppingParcel()
+	}
+	switch f.status {
 	case Empty:
 		action = f.seekParcel(simulation)
+	case Grabbing:
 	case Loaded:
 		action = f.seekTruck(simulation)
 	}
