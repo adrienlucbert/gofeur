@@ -1,6 +1,8 @@
 package simulation
 
 import (
+	"strings"
+
 	"github.com/adrienlucbert/gofeur/parsing"
 	"github.com/adrienlucbert/gofeur/pkg"
 )
@@ -41,7 +43,7 @@ func newParcelFromParsing(from *parsing.Parcel) parcel {
 	return parcel{
 		name:   from.Name,
 		pos:    pkg.Vector{X: int(from.X), Y: int(from.Y)},
-		color:  from.Color,
+		color:  strings.ToUpper(from.Color),
 		weight: uint(from.Weight),
 	}
 }
