@@ -167,22 +167,24 @@ func (f *forklift) startDroppingParcel() error {
 	if !f.parcel.HasValue() {
 		return errForkliftEmpty
 	}
-	truck := f.target.Value().(*truck)
-	if truck.load+f.parcel.Value().weight > truck.capacity {
-		return errTruckFull
+	if truck, ok := f.target.Value().(*truck); ok {
+		if truck.load+f.parcel.Value().weight > truck.capacity {
+			return errTruckFull
+		}
+		f.status = Dropping
 	}
-	f.status = Dropping
 	return nil
 }
 
 func (f *forklift) finishDroppingParcel() {
-	truck := f.target.Value().(*truck)
-	truck.load += f.parcel.Value().weight
-	f.target.Clear()
-	f.path.Clear()
-	f.parcel.Value().status = DroppedOff
-	f.parcel.Clear()
-	f.status = Empty
+	if truck, ok := f.target.Value().(*truck); ok {
+		truck.load += f.parcel.Value().weight
+		f.target.Clear()
+		f.path.Clear()
+		f.parcel.Value().status = DroppedOff
+		f.parcel.Clear()
+		f.status = Empty
+	}
 }
 
 func (f *forklift) seekParcel(simulation *Simulation) forkliftAction {
