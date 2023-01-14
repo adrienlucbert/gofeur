@@ -17,13 +17,14 @@ const (
 )
 
 type truck struct {
-	name     string
-	pos      pkg.Vector
-	capacity uint
-	load     uint
-	status   TruckStatus
-	awayTime uint
-	awayLeft uint
+	name         string
+	pos          pkg.Vector
+	capacity     uint
+	load         uint
+	loadEstimate uint
+	status       TruckStatus
+	awayTime     uint
+	awayLeft     uint
 }
 
 // Implement prop.Pos()
@@ -38,12 +39,14 @@ func (t *truck) IsAvailable() bool {
 
 func newTruckFromParsing(from *parsing.Truck) truck {
 	return truck{
-		name:     from.Name,
-		pos:      pkg.Vector{X: int(from.X), Y: int(from.Y)},
-		capacity: from.Weight,
-		load:     0,
-		awayTime: from.RAvail,
-		awayLeft: 0,
+		name:         from.Name,
+		pos:          pkg.Vector{X: int(from.X), Y: int(from.Y)},
+		capacity:     from.Weight,
+		load:         0,
+		loadEstimate: 0,
+		status:       Loading,
+		awayTime:     from.RAvail,
+		awayLeft:     0,
 	}
 }
 
@@ -55,22 +58,21 @@ func (t *truck) startDelivery() {
 func (t *truck) simulateRound(simulation *Simulation) {
 	switch t.status {
 	case Loading:
-		if t.load > 0 {
+		availableLoad := t.capacity - t.loadEstimate
+		var parcelIsNearby bool
+		if target := findClosestParcel(simulation.parcels, t.pos, availableLoad); target != nil {
+			// determine if a forklift would have roughly enough time to travel from
+			// the truck to nearest parcel and back in the time the truck would be away
+			parcelIsNearby = t.pos.Distance(target.pos) <= float32(t.awayTime)*2
+		}
+		if t.load > 0 && t.load == t.loadEstimate && !parcelIsNearby {
 			t.startDelivery()
 		}
-		// TODO: determine whether or not it is profitable to start delivery, based on:
-		// - distance to nearest forklift and its load
-		// - distance to nearest parcel and its weight
-		// availableLoad := t.capacity - t.load
-		// if target := findClosestParcel(simulation.parcels, t.pos); target != nil {
-		// 	if target.weight > availableLoad {
-		// 		t.startDelivery()
-		// 	}
-		// }
 	case Away:
 		t.awayLeft--
 		if t.awayLeft == 0 {
 			t.load = 0
+			t.loadEstimate = 0
 			t.status = Loading
 		}
 	}

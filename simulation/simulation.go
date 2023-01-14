@@ -43,12 +43,12 @@ func (s *Simulation) IsRunning() bool {
 	return s.Status == Running
 }
 
-func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
+func findClosestParcel(parcels []parcel, pos pkg.Vector, maximumWeight uint) *parcel {
 	var closestParcel *parcel
 	var closestParcelDistance float32
 	for i := range parcels {
 		parcel := &parcels[i]
-		if !parcel.IsAvailable() {
+		if !parcel.IsAvailable() || parcel.weight > maximumWeight {
 			continue
 		}
 		parcelDistance := pos.SquaredDistance(parcel.pos)
@@ -65,12 +65,12 @@ func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
 // predicates can't be called with an interface as parameter
 // NOTE: giving `prop` a `isAvailable` method would solve this issue
 // NOTE: turns out it doesn't, at passing []parcel as []prop is impossible
-func findClosestTruck(trucks []truck, pos pkg.Vector) *truck {
+func findClosestTruck(trucks []truck, pos pkg.Vector, minimumCapacity uint) *truck {
 	var closestTruck *truck
 	var closestTruckDistance float32
 	for i := range trucks {
 		truck := &trucks[i]
-		if !truck.IsAvailable() {
+		if !truck.IsAvailable() || truck.capacity-truck.loadEstimate < minimumCapacity {
 			continue
 		}
 		truckDistance := pos.SquaredDistance(truck.pos)
