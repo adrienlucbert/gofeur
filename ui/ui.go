@@ -39,15 +39,15 @@ func addElementsToBuilding[T any](elements []T, building [][]any) {
 }
 
 // UIStart instantiate UI Application and setup its environment
-func UIStart(st parsing.Startup, sb parsing.StorageBuilding) *UI {
+func UIStart(st *parsing.Simulation) *UI {
 	app := tview.NewApplication()
 
 	ui := &UI{
 		App: app,
 	}
 
-	w := int(st.Width)
-	l := int(st.Length)
+	w := int(st.Warehouse.Width)
+	l := int(st.Warehouse.Length)
 
 	ui.building = make([][]any, l)
 
@@ -56,9 +56,9 @@ func UIStart(st parsing.Startup, sb parsing.StorageBuilding) *UI {
 			ui.building[y] = append(ui.building[y], ".")
 		}
 	}
-	addElementsToBuilding(sb.Packs, ui.building)
-	addElementsToBuilding(sb.Forklifts, ui.building)
-	addElementsToBuilding(sb.Trucks, ui.building)
+	addElementsToBuilding(st.Warehouse.Parcels, ui.building)
+	addElementsToBuilding(st.Warehouse.Forklifts, ui.building)
+	addElementsToBuilding(st.Warehouse.Trucks, ui.building)
 
 	ui.initUI()
 	ui.updateStorageBuildingTable(w, l)

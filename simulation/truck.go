@@ -41,11 +41,11 @@ func newTruckFromParsing(from *parsing.Truck) truck {
 	return truck{
 		name:         from.Name,
 		pos:          pkg.Vector{X: int(from.X), Y: int(from.Y)},
-		capacity:     from.Weight,
+		capacity:     uint(from.MaxWeight),
 		load:         0,
 		loadEstimate: 0,
 		status:       Loading,
-		awayTime:     from.RAvail,
+		awayTime:     uint(from.Available),
 		awayLeft:     0,
 	}
 }
