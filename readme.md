@@ -131,3 +131,51 @@ distinct purpose.
 - `ui`
   The `ui` package contains utilities to display a TUI interface for the Gofeur
   application.
+
+## Strategy
+
+The strategy adopted to load the truck is fairly simple, but features a few
+interesting optimizations.
+
+### Forklifts behaviour
+
+Forklifts can either be **empty** or **carry** a parcel. **In the case they're
+empty**, they'll try to reach the nearest parcel to grab it. To **ensure
+multiple forklifts don't target the same parcel**, once a forklift targets a
+parcel, it is marked as targeted, and can't be targeted by another forklift
+unless it gets unfocused for some reason (no path found, ...).
+
+**In the case they're carrying a parcel**, forklifts will try to reach the
+nearest truck **that has enough capacity left** to hold the carried parcel.  
+To **avoid races** and conflicts between forklifts, once a forklift targets a
+truck, **it announces itself** so the truck can **estimate its remaining
+capacity** if the forklift delivers its parcel. If the **estimated remaining
+capacity exceeds** or equals the truck's maximum capacity, it **can't be
+targeted** by another forklift.
+
+### Trucks behaviour
+
+In case trucks are **partially loaded** and **no forklift is targetting it**,
+they will evaluate the **distance to the nearest parcel that can still fit** in
+their remaining capacity.
+If that distance travelled by a forklift back-and-forth is **less than the time
+needed for the truck to deliver** it's payload, then it will **start the
+delivery**. Otherwise it will **wait for the forklifts to load it** until
+another opportunity as described above arises.
+
+### Pathfinding strategy
+
+Forklifts need to navigate through the warehouse quite often. To achieve that,
+and find the **quickest path** to a destination, an implementation of the **A\*
+algorithm** is used.  
+Resolved paths are **cached within each forklift**, and consumed turn after turn,
+as long as the **next path node is not obstructed** when the forklift needs to
+move. If that happens, **the nearest target is targeted** (most likely the same),
+and the **path is recalculated**.
+
+## Credits
+
+This project is the work of [Fahad Assoumani](https://github.com/Nero-F),
+[Mathieu Pointecouteau](https://github.com/Krapaince) and
+[Adrien Lucbert](https://github.com/adrienlucbert), under the supervision of
+[Sébastien Descamps](https://github.com/sebastienD) as a Go speaker and trainer.
