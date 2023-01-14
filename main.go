@@ -25,9 +25,9 @@ func (err gofeurError) Error() string {
 func main() {
 	defer func() {
 		if err := recover(); err != nil {
-			var gofeurError = gofeurError{err: fmt.Sprintf("%v", err)}
+			err := gofeurError{err: fmt.Sprintf("%v", err)}
 
-			println(gofeurError.Error())
+			println(err.Error())
 		}
 	}()
 
