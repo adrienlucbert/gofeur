@@ -35,6 +35,12 @@ func TestEmptyOptionalValueOr(t *testing.T) {
 	assert.Equal(t, opt.ValueOr(1337), 1337)
 }
 
+func TestEmptyOptionalClear(t *testing.T) {
+	opt := New(42)
+	opt.Clear()
+	assert.False(t, opt.HasValue())
+}
+
 func TestInlineOptionalMethodCall(t *testing.T) {
 	// If Optional methods have a pointer receiver, they can't be called on a
 	// non-addressable value (such as the direct return of New or NewEmpty)

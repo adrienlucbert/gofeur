@@ -47,7 +47,6 @@ linters-settings:
     list-type: blacklist
     include-go-root: true
     packages-with-error-message:
-      - reflect: "shouldn't be used by most application"
       - unsafe: "it's not safe"
       - golang.org/x/net/context: "use context"
   errcheck:

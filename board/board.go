@@ -3,11 +3,15 @@ package board
 
 // Tile holds information useful to the pathfinding algorithm
 type Tile struct {
-	Blocked bool
+	Blocked   bool
+	DebugChar rune
 }
 
 func (t Tile) String() string {
 	if t.Blocked {
+		if t.DebugChar != 0 {
+			return string(t.DebugChar)
+		}
 		return "#"
 	}
 	return "·"
@@ -43,6 +47,15 @@ func (b *Board) String() string {
 // At returns the tile at given coordinates
 func (b *Board) At(x uint, y uint) *Tile {
 	return &(*b)[y][x]
+}
+
+// Clear resets all tiles Blocked property to false
+func (b *Board) Clear() {
+	for y := uint(0); y < b.Height(); y++ {
+		for x := uint(0); x < b.Width(); x++ {
+			b.At(x, y).Blocked = false
+		}
+	}
 }
 
 // IsInBounds returns whether the given position is within the board's bounds
