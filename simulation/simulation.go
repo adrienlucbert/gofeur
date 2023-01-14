@@ -88,18 +88,18 @@ func (s *Simulation) start() {
 }
 
 // New initializes a Simulation object
-func New(gofeur *parsing.Gofeur) Simulation {
+func New(gofeur *parsing.Simulation) Simulation {
 	s := Simulation{}
-	s.MaxRound = gofeur.ST.Rounds
-	s.board = board.New(gofeur.ST.Width, gofeur.ST.Length)
-	for i := range gofeur.SB.Forklifts {
-		s.forklifts = append(s.forklifts, newForkliftFromParsing(&gofeur.SB.Forklifts[i]))
+	s.MaxRound = uint(gofeur.Cycle)
+	s.board = board.New(uint(gofeur.Warehouse.Width), uint(gofeur.Warehouse.Length))
+	for i := range gofeur.Warehouse.Forklifts {
+		s.forklifts = append(s.forklifts, newForkliftFromParsing(&gofeur.Warehouse.Forklifts[i]))
 	}
-	for i := range gofeur.SB.Packs {
-		s.parcels = append(s.parcels, newParcelFromParsing(&gofeur.SB.Packs[i]))
+	for i := range gofeur.Warehouse.Parcels {
+		s.parcels = append(s.parcels, newParcelFromParsing(&gofeur.Warehouse.Parcels[i]))
 	}
-	for i := range gofeur.SB.Trucks {
-		s.trucks = append(s.trucks, newTruckFromParsing(&gofeur.SB.Trucks[i]))
+	for i := range gofeur.Warehouse.Trucks {
+		s.trucks = append(s.trucks, newTruckFromParsing(&gofeur.Warehouse.Trucks[i]))
 	}
 	s.updateBoard()
 	return s

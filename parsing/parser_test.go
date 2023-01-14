@@ -1,4 +1,4 @@
-package pkg
+package parsing
 
 import (
 	"strings"
@@ -27,53 +27,53 @@ func TestParseReader(t *testing.T) {
 				"camion_a 2 2 4007 4",
 			},
 			expectedOutput: Simulation{
-				cycle: 1000,
-				warehouse: warehouse{
-					width:  5,
-					length: 4,
-					parcels: []parcel{
+				Cycle: 1000,
+				Warehouse: Warehouse{
+					Width:  5,
+					Length: 4,
+					Parcels: []Parcel{
 						{
-							name:       "colis_a_livrer",
+							Name:       "colis_a_livrer",
 							coordinate: coordinate{X: 2, Y: 1},
-							weight:     green,
+							Weight:     green,
 						},
 						{
-							name:       "paquet",
+							Name:       "paquet",
 							coordinate: coordinate{X: 2, Y: 2},
-							weight:     blue,
+							Weight:     blue,
 						},
 						{
-							name:       "deadpool",
+							Name:       "deadpool",
 							coordinate: coordinate{X: 0, Y: 3},
-							weight:     yellow,
+							Weight:     yellow,
 						},
 						{
-							name: "colère_DU_dragon",
+							Name: "colère_DU_dragon",
 							coordinate: coordinate{
 								X: 4,
 								Y: 1,
 							},
-							weight: green,
+							Weight: green,
 						},
 					},
-					forklifts: []forklift{
+					Forklifts: []Forklift{
 						{
-							name:       "transpalette_1",
+							Name:       "transpalette_1",
 							coordinate: coordinate{X: 0, Y: 5},
 						},
 					},
-					trucks: []truck{
+					Trucks: []Truck{
 						{
-							name:       "camion_b",
+							Name:       "camion_b",
 							coordinate: coordinate{X: 3, Y: 4},
-							maxWeight:  4000,
-							available:  5,
+							MaxWeight:  4000,
+							Available:  5,
 						},
 						{
-							name:       "camion_a",
+							Name:       "camion_a",
 							coordinate: coordinate{X: 2, Y: 2},
-							maxWeight:  4007,
-							available:  4,
+							MaxWeight:  4007,
+							Available:  4,
 						},
 					},
 				},
@@ -86,21 +86,21 @@ func TestParseReader(t *testing.T) {
 				"truck 0 5 10000 60",
 			},
 			expectedOutput: Simulation{
-				cycle: 243,
-				warehouse: warehouse{
-					width: 10, length: 50,
-					forklifts: []forklift{
+				Cycle: 243,
+				Warehouse: Warehouse{
+					Width: 10, Length: 50,
+					Forklifts: []Forklift{
 						{
-							name:       "forklift",
+							Name:       "forklift",
 							coordinate: coordinate{X: 1, Y: 10},
 						},
 					},
-					trucks: []truck{
+					Trucks: []Truck{
 						{
-							name:       "truck",
+							Name:       "truck",
 							coordinate: coordinate{X: 0, Y: 5},
-							maxWeight:  10000,
-							available:  60,
+							MaxWeight:  10000,
+							Available:  60,
 						},
 					},
 				},
@@ -164,10 +164,10 @@ func TestParseWarehouseSection(t *testing.T) {
 			input:    []string{"453", "4952", "34"},
 			hasError: false,
 			expectedOutput: Simulation{
-				cycle: 34,
-				warehouse: warehouse{
-					width:  453,
-					length: 4952,
+				Cycle: 34,
+				Warehouse: Warehouse{
+					Width:  453,
+					Length: 4952,
 				},
 			},
 		},
@@ -187,7 +187,7 @@ func TestParseWarehouseSection(t *testing.T) {
 func TestParseParcel(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput parcel
+		expectedOutput Parcel
 		hasError       bool
 		errorKind      parserErrorKind
 	}
@@ -220,13 +220,13 @@ func TestParseParcel(t *testing.T) {
 		},
 		{
 			input: []string{"parcel", "1", "1", "yellow"},
-			expectedOutput: parcel{
-				name: "parcel",
+			expectedOutput: Parcel{
+				Name: "parcel",
 				coordinate: coordinate{
 					X: 1,
 					Y: 1,
 				},
-				weight: yellow,
+				Weight: yellow,
 			},
 		},
 	}
@@ -245,7 +245,7 @@ func TestParseParcel(t *testing.T) {
 func TestParseForklift(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput forklift
+		expectedOutput Forklift
 		hasError       bool
 		errorKind      parserErrorKind
 	}
@@ -253,8 +253,8 @@ func TestParseForklift(t *testing.T) {
 	testCases := []testCase{
 		{
 			input: []string{"forklift", "2", "3"},
-			expectedOutput: forklift{
-				name: "forklift",
+			expectedOutput: Forklift{
+				Name: "forklift",
 				coordinate: coordinate{
 					X: 2,
 					Y: 3,
@@ -277,7 +277,7 @@ func TestParseForklift(t *testing.T) {
 func TestParseTruck(t *testing.T) {
 	type testCase struct {
 		input          []string
-		expectedOutput truck
+		expectedOutput Truck
 		hasError       bool
 		errorKind      parserErrorKind
 	}
@@ -285,14 +285,14 @@ func TestParseTruck(t *testing.T) {
 	testCases := []testCase{
 		{
 			input: []string{"truck", "2", "3", "4000", "5"},
-			expectedOutput: truck{
-				name: "truck",
+			expectedOutput: Truck{
+				Name: "truck",
 				coordinate: coordinate{
 					X: 2,
 					Y: 3,
 				},
-				maxWeight: 4000,
-				available: 5,
+				MaxWeight: 4000,
+				Available: 5,
 			},
 		},
 	}

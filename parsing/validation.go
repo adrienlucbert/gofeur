@@ -1,4 +1,4 @@
-package pkg
+package parsing
 
 import (
 	"errors"
@@ -18,27 +18,27 @@ var (
 //   - two entities are on the same grid cell
 //   - two entities bears the same name
 func VerifySimulationValidity(simulation Simulation) error {
-	if len(simulation.warehouse.forklifts) == 0 {
+	if len(simulation.Warehouse.Forklifts) == 0 {
 		return errAtLeastOneForklift
 	}
 
-	if len(simulation.warehouse.trucks) == 0 {
+	if len(simulation.Warehouse.Trucks) == 0 {
 		return errAtLeastOneTruck
 	}
 
-	err := checkWarehouseSize(simulation.warehouse)
+	err := checkWarehouseSize(simulation.Warehouse)
 	if err != nil {
 		return err
 	}
 
-	err = ensureTrucksAreOnAWarehouseSide(simulation.warehouse.trucks, simulation.warehouse)
+	err = ensureTrucksAreOnAWarehouseSide(simulation.Warehouse.Trucks, simulation.Warehouse)
 	if err != nil {
 		return err
 	}
 
 	entities := makeEntitiesArray(simulation)
 
-	err = checkForOutOfWarehouseBoundEntity(entities, simulation.warehouse)
+	err = checkForOutOfWarehouseBoundEntity(entities, simulation.Warehouse)
 	if err != nil {
 		return err
 	}
@@ -59,8 +59,8 @@ func (err tooSmallWarehouseError) Error() string {
 	return fmt.Sprintf("too small warehouse (%d)", err.size)
 }
 
-func checkWarehouseSize(warehouse warehouse) error {
-	size := warehouse.length * warehouse.width
+func checkWarehouseSize(warehouse Warehouse) error {
+	size := warehouse.Length * warehouse.Width
 	var minimumWarehouseSize gridUnit = 2
 
 	if size < minimumWarehouseSize {
@@ -70,7 +70,7 @@ func checkWarehouseSize(warehouse warehouse) error {
 }
 
 type notOnSideTrucksError struct {
-	trucks []truck
+	trucks []Truck
 }
 
 func (err notOnSideTrucksError) Error() string {
@@ -78,18 +78,18 @@ func (err notOnSideTrucksError) Error() string {
 
 	trucks := make([]string, 0, len(err.trucks))
 	for _, truck := range err.trucks {
-		trucks = append(trucks, fmt.Sprintf("  %s: %s", truck.coordinate, truck.name))
+		trucks = append(trucks, fmt.Sprintf("  %s: %s", truck.coordinate, truck.Name))
 	}
 
 	output += strings.Join(trucks, "\n")
 	return output
 }
 
-func ensureTrucksAreOnAWarehouseSide(trucks []truck, warehouse warehouse) error {
+func ensureTrucksAreOnAWarehouseSide(trucks []Truck, warehouse Warehouse) error {
 	min := coordinate{}
-	max := coordinate{X: warehouse.width - 1, Y: warehouse.length - 1}
+	max := coordinate{X: warehouse.Width - 1, Y: warehouse.Length - 1}
 
-	errTrucks := make([]truck, 0)
+	errTrucks := make([]Truck, 0)
 	for _, truck := range trucks {
 		isOnLeftOrRightSize := truck.X == min.X || truck.X == max.X
 		isOnTopOrBottomSize := truck.Y == min.Y || truck.Y == max.Y
@@ -107,18 +107,18 @@ func ensureTrucksAreOnAWarehouseSide(trucks []truck, warehouse warehouse) error 
 }
 
 func makeEntitiesArray(simulation Simulation) []entity {
-	nbEntities := len(simulation.warehouse.parcels) + len(simulation.warehouse.forklifts) + len(simulation.warehouse.trucks)
+	nbEntities := len(simulation.Warehouse.Parcels) + len(simulation.Warehouse.Forklifts) + len(simulation.Warehouse.Trucks)
 	entities := make([]entity, 0, nbEntities)
 
-	for _, parcel := range simulation.warehouse.parcels {
+	for _, parcel := range simulation.Warehouse.Parcels {
 		entities = append(entities, parcel)
 	}
 
-	for _, forklift := range simulation.warehouse.forklifts {
+	for _, forklift := range simulation.Warehouse.Forklifts {
 		entities = append(entities, forklift)
 	}
 
-	for _, truck := range simulation.warehouse.trucks {
+	for _, truck := range simulation.Warehouse.Trucks {
 		entities = append(entities, truck)
 	}
 
@@ -130,14 +130,14 @@ type outOfBoundError struct {
 }
 
 func (err outOfBoundError) Error() string {
-	return fmt.Sprintf("The %s named %s is out of bound", err.entity.Kind(), err.entity.Name())
+	return fmt.Sprintf("The %s named %s is out of bound", err.entity.kind(), err.entity.stringerName())
 }
 
-func checkForOutOfWarehouseBoundEntity(entities []entity, warehouse warehouse) error {
+func checkForOutOfWarehouseBoundEntity(entities []entity, warehouse Warehouse) error {
 	for _, entity := range entities {
-		coord := entity.Coord()
+		coord := entity.coord()
 
-		if !(coord.X < warehouse.width && coord.Y < warehouse.width) {
+		if !(coord.X < warehouse.Width && coord.Y < warehouse.Width) {
 			return outOfBoundError{entity: entity}
 		}
 	}
@@ -154,7 +154,7 @@ func (err stackedEntitiesError) Error() string {
 }
 
 func ensureNoStackedEntities(entities []entity) error {
-	err := hasEntityPropertyDup(entities, entity.Coord)
+	err := hasEntityPropertyDup(entities, entity.coord)
 	if err != nil {
 		return stackedEntitiesError{err: err}
 	}
@@ -170,7 +170,7 @@ func (err dupEntityNameError) Error() string {
 }
 
 func ensureForDuplicatedEntitiyName(entities []entity) error {
-	err := hasEntityPropertyDup(entities, entity.Name)
+	err := hasEntityPropertyDup(entities, entity.stringerName)
 	if err != nil {
 		return dupEntityNameError{err: err}
 	}
@@ -190,8 +190,8 @@ func (err dupEntityError[T]) Error() string {
 	for property, entities := range err.propertiesEntities {
 		errEntities := make([]string, 0, len(entities))
 		for _, entity := range entities {
-			kind := (*entity).Kind()
-			name := (*entity).Name()
+			kind := (*entity).kind()
+			name := (*entity).stringerName()
 
 			errEntities = append(errEntities, fmt.Sprintf("%s: %s", kind, name))
 		}
