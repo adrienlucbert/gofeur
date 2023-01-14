@@ -22,6 +22,11 @@ const (
 	Unfinished
 )
 
+type prop interface {
+	Pos() pkg.Vector
+	IsAvailable() bool
+}
+
 // Simulation represents the simulation data
 type Simulation struct {
 	MaxRound  uint
@@ -42,10 +47,10 @@ func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
 	var closestParcel *parcel
 	var closestParcelDistance float32
 	for i := range parcels {
-		if parcels[i].carried {
+		parcel := &parcels[i]
+		if !parcel.IsAvailable() {
 			continue
 		}
-		parcel := &parcels[i]
 		parcelDistance := pos.SquaredDistance(parcel.pos)
 		if closestParcel == nil || parcelDistance < closestParcelDistance {
 			closestParcel = parcel
@@ -53,6 +58,28 @@ func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
 		}
 	}
 	return closestParcel
+}
+
+// TODO: make truck and parcel implement a common interface to avoid repeating code
+// NOTE: turns out the type-specific filter condition makes it difficult as
+// predicates can't be called with an interface as parameter
+// NOTE: giving `prop` a `isAvailable` method would solve this issue
+// NOTE: turns out it doesn't, at passing []parcel as []prop is impossible
+func findClosestTruck(trucks []truck, pos pkg.Vector) *truck {
+	var closestTruck *truck
+	var closestTruckDistance float32
+	for i := range trucks {
+		truck := &trucks[i]
+		if !truck.IsAvailable() {
+			continue
+		}
+		truckDistance := pos.SquaredDistance(truck.pos)
+		if closestTruck == nil || truckDistance < closestTruckDistance {
+			closestTruck = truck
+			closestTruckDistance = truckDistance
+		}
+	}
+	return closestTruck
 }
 
 func (s *Simulation) start() {
@@ -81,7 +108,7 @@ func New(gofeur *parsing.Gofeur) Simulation {
 func (s *Simulation) updateBoard() {
 	s.board.Clear()
 	for i := range s.parcels {
-		if s.parcels[i].carried {
+		if s.parcels[i].status == Carried || s.parcels[i].status == DroppedOff {
 			continue
 		}
 		s.board.At(uint(s.parcels[i].pos.X), uint(s.parcels[i].pos.Y)).Blocked = true
@@ -96,12 +123,28 @@ func (s *Simulation) updateBoard() {
 		s.board.At(uint(s.forklifts[i].pos.X), uint(s.forklifts[i].pos.Y)).DebugChar = 'L'
 	}
 	for i := range s.trucks {
+		if s.trucks[i].status != Loading {
+			continue
+		}
 		s.board.At(uint(s.trucks[i].pos.X), uint(s.trucks[i].pos.Y)).Blocked = true
 		s.board.At(uint(s.trucks[i].pos.X), uint(s.trucks[i].pos.Y)).DebugChar = 'T'
 	}
 }
 
+func (s *Simulation) areAnyParcelsLeft() bool {
+	for i := range s.parcels {
+		if s.parcels[i].status != DroppedOff {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Simulation) simulateRound() {
+	if !s.areAnyParcelsLeft() {
+		s.Status = Finished
+		return
+	}
 	logger.Debug("Round %d\n", s.Round+1)
 	for i := range s.forklifts {
 		s.forklifts[i].simulateRound(s)

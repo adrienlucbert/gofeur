@@ -24,8 +24,8 @@ type forklift struct {
 	name   string
 	pos    pkg.Vector
 	parcel optional.Optional[*parcel]
-	state  ForkLiftStatus
-	target optional.Optional[*parcel]
+	status ForkLiftStatus
+	target optional.Optional[prop]
 	path   optional.Optional[[]pkg.Vector]
 }
 
@@ -34,23 +34,19 @@ func newForkliftFromParsing(from *parsing.Forklift) forklift {
 		name:   from.Name,
 		pos:    pkg.Vector{X: int(from.X), Y: int(from.Y)},
 		parcel: optional.NewEmpty[*parcel](),
-		state:  Empty,
-		target: optional.NewEmpty[*parcel](),
+		status: Empty,
+		target: optional.NewEmpty[prop](),
 		path:   optional.NewEmpty[[]pkg.Vector](),
 	}
 }
 
 var errParcelNotFound = errors.New("No closest parcel found")
+var errTruckNotFound = errors.New("No closest truck found")
 
-func (f *forklift) findTarget(simulation *Simulation) error {
-	// PERF: don't refetch target if not reached
-	f.target.Set(findClosestParcel(simulation.parcels, f.pos))
-	if !f.target.HasValue() {
-		return errParcelNotFound
-	}
-	simulation.board.At(uint(f.target.Value().pos.X), uint(f.target.Value().pos.Y)).Blocked = false
-	path, err := pathfinding.Resolve(&simulation.board, f.pos, f.target.Value().pos)
-	simulation.board.At(uint(f.target.Value().pos.X), uint(f.target.Value().pos.Y)).Blocked = true
+func (f *forklift) findPathToTarget(simulation *Simulation) error {
+	simulation.board.At(uint(f.target.Value().Pos().X), uint(f.target.Value().Pos().Y)).Blocked = false
+	path, err := pathfinding.Resolve(&simulation.board, f.pos, f.target.Value().Pos())
+	simulation.board.At(uint(f.target.Value().Pos().X), uint(f.target.Value().Pos().Y)).Blocked = true
 	if err != nil {
 		return err
 	}
@@ -58,18 +54,47 @@ func (f *forklift) findTarget(simulation *Simulation) error {
 	return nil
 }
 
+func (f *forklift) findClosestParcel(simulation *Simulation) error {
+	// PERF: don't refetch target if not reached
+	if target := findClosestParcel(simulation.parcels, f.pos); target != nil {
+		target.status = Targeted
+		f.target.Set(target)
+	} else {
+		f.target.Clear()
+		return errParcelNotFound
+	}
+	return f.findPathToTarget(simulation)
+}
+
+func (f *forklift) findClosestTruck(simulation *Simulation) error {
+	// PERF: don't refetch target if not reached
+	if target := findClosestTruck(simulation.trucks, f.pos); target != nil {
+		f.target.Set(target)
+	} else {
+		f.target.Clear()
+		return errTruckNotFound
+	}
+	return f.findPathToTarget(simulation)
+}
+
 var errForkliftAlreadyLoaded = errors.New("Forklift already loaded")
 
 func (f *forklift) grabParcel(parcel *parcel) error {
-	if f.state == Loaded {
+	if f.status == Loaded {
 		return errForkliftAlreadyLoaded
 	}
 	f.target.Clear()
 	f.path.Clear()
 	f.parcel.Set(parcel)
-	f.state = Loaded
-	parcel.carried = true
+	f.status = Loaded
+	parcel.status = Carried
 	return nil
+}
+
+func (f *forklift) dropParcelFocus() {
+	f.target.Value().(*parcel).status = StandingBy
+	f.target.Clear()
+	f.path.Clear()
 }
 
 var errForkliftEmpty = errors.New("Forklift is empty")
@@ -82,31 +107,57 @@ func (f *forklift) depositParcel(truck *truck) error {
 	if truck.load+f.parcel.Value().weight > truck.capacity {
 		return errTruckFull
 	}
+	f.parcel.Value().status = DroppedOff
 	truck.load += f.parcel.Value().weight
+	f.target.Clear()
+	f.path.Clear()
 	f.parcel.Clear()
+	f.status = Empty
 	return nil
 }
 
-func (f *forklift) simulateRound(simulation *Simulation) {
-	switch f.state {
-	case Empty:
-		if !f.target.HasValue() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
-			if err := f.findTarget(simulation); err != nil {
-				logger.Error("%s\n", err.Error())
-				return
-			}
+func (f *forklift) seekParcel(simulation *Simulation) {
+	if !f.target.HasValue() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
+		if f.target.HasValue() {
+			f.dropParcelFocus()
 		}
-		if len(f.path.Value()) <= 1 {
-			logger.Debug("GRAB\n")
-			if err := f.grabParcel(f.target.Value()); err != nil {
-				logger.Error("%s\n", err.Error())
-				return
-			}
+		if err := f.findClosestParcel(simulation); err != nil {
+			logger.Error("%s\n", err.Error())
 			return
 		}
-		f.pos = f.path.Value()[0]
-		f.path.Set(f.path.Value()[1:])
+	}
+	if len(f.path.Value()) <= 1 {
+		if err := f.grabParcel(f.target.Value().(*parcel)); err != nil {
+			logger.Error("%s\n", err.Error())
+		}
+		return
+	}
+	f.pos = f.path.Value()[0]
+	f.path.Set(f.path.Value()[1:])
+}
+
+func (f *forklift) seekTruck(simulation *Simulation) {
+	if !f.target.HasValue() || !f.target.Value().IsAvailable() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
+		if err := f.findClosestTruck(simulation); err != nil {
+			logger.Error("%s\n", err.Error())
+			return
+		}
+	}
+	if len(f.path.Value()) <= 1 {
+		if err := f.depositParcel(f.target.Value().(*truck)); err != nil {
+			logger.Error("%s\n", err.Error())
+		}
+		return
+	}
+	f.pos = f.path.Value()[0]
+	f.path.Set(f.path.Value()[1:])
+}
+
+func (f *forklift) simulateRound(simulation *Simulation) {
+	switch f.status {
+	case Empty:
+		f.seekParcel(simulation)
 	case Loaded:
-		// TODO: go to nearest available truck
+		f.seekTruck(simulation)
 	}
 }
