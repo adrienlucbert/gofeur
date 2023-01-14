@@ -291,13 +291,17 @@ func parseParcel(tokens []string) (Parcel, parserError) {
 			value:     &pkg.Y,
 		},
 		{
-			fieldName: "weight",
+			fieldName: "color",
 			kind:      parcelColorTokenKind,
 			value:     &pkg.Weight,
 		},
 	}
 
 	err := parseTokens(tokens, parcelTokenParsers)
+	if err == nil {
+		colorTokenIndex := len(parcelTokenParsers) - 1
+		pkg.Color = strings.ToLower(tokens[colorTokenIndex])
+	}
 	return pkg, err
 }
 

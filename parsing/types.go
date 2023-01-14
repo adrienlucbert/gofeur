@@ -39,6 +39,7 @@ type Warehouse struct {
 type Parcel struct {
 	Name string
 	coordinate
+	Color  string
 	Weight weight
 }
 

@@ -22,6 +22,7 @@ const (
 type parcel struct {
 	name   string
 	pos    pkg.Vector
+	color  string
 	weight uint
 	status ParcelStatus
 }
@@ -40,6 +41,7 @@ func newParcelFromParsing(from *parsing.Parcel) parcel {
 	return parcel{
 		name:   from.Name,
 		pos:    pkg.Vector{X: int(from.X), Y: int(from.Y)},
+		color:  from.Color,
 		weight: uint(from.Weight),
 	}
 }

@@ -35,16 +35,19 @@ func TestParseReader(t *testing.T) {
 						{
 							Name:       "colis_a_livrer",
 							coordinate: coordinate{X: 2, Y: 1},
+							Color:      "green",
 							Weight:     green,
 						},
 						{
 							Name:       "paquet",
 							coordinate: coordinate{X: 2, Y: 2},
+							Color:      "blue",
 							Weight:     blue,
 						},
 						{
 							Name:       "deadpool",
 							coordinate: coordinate{X: 0, Y: 3},
+							Color:      "yellow",
 							Weight:     yellow,
 						},
 						{
@@ -53,6 +56,7 @@ func TestParseReader(t *testing.T) {
 								X: 4,
 								Y: 1,
 							},
+							Color:  "green",
 							Weight: green,
 						},
 					},
@@ -226,6 +230,7 @@ func TestParseParcel(t *testing.T) {
 					X: 1,
 					Y: 1,
 				},
+				Color:  "yellow",
 				Weight: yellow,
 			},
 		},

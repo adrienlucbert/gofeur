@@ -33,7 +33,7 @@ func main() {
 
 	filename := flag.String("filename", "", "Map file path")
 	displayUI := flag.Bool("ui", false, "Display UI")
-	logLevel := flag.String("log-level", "Debug", "Log level (Debug, Info, Warn, Error, None)")
+	logLevel := flag.String("log-level", "Info", "Log level (Debug, Info, Warn, Error, None)")
 	flag.Parse()
 
 	config.Set("displayUI", displayUI)
