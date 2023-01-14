@@ -83,3 +83,51 @@ truck_a 1 9
 
 Section are separated by nothing, empty lines aren't allowed and there is no
 way to put comment. Good luck with that!
+
+## Code overview
+
+The project is composed of multiple packages, each serving a
+distinct purpose.
+
+**Packages**:
+- `board`:
+
+  The `board` package is used to represent the warehouse grid with
+  the parcels, forklifts, and trucks. This representation is then
+  used by the `pathfinding` package.
+
+- `config`
+
+  The `config` package provides a way to store and retrieve the application
+  configuration.
+
+- `logger`
+
+  The `logger` provides a set of functions to print messages at different
+  levels.
+
+- `optional`
+
+  The `optional` package provides a generic wrapper around a pointer
+  to avoid raw pointer manipulation on optional/nullable types. 
+ 
+
+- `parsing`
+
+  The `parsing` package provides functions to parse an input file into a
+  simulation and to check that simulation validity.
+
+- `pathfinding`
+  The `pathfinding` package provides functions to find the path between two
+  points on a board.
+  
+- `pkg`
+  The `pkg` package provides the common type `Vector`.
+
+- `simulation`
+  The `simulation` package is the heart of the project and is responsible of
+  running the simulation.
+  
+- `ui`
+  The `ui` package contains utilities to display a TUI interface for the Gofeur
+  application.
