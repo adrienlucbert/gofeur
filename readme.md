@@ -21,7 +21,7 @@ entities live.
 ### Run the project
 ```bash
 go get # Fetch the dependencies
-bo build # Compile
+go build # Compile
 ./gofeur -filename ./input_file # Run gofeur (See Input file section for the file format)
 ```
 
