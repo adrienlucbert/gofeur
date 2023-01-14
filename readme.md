@@ -1,4 +1,11 @@
-# Gofeur
+<p align="center">
+  <a>
+    <img alt="GOFEUR Logo" src="./gofeur_logo.png" style="width:500px;"/>
+  </a>
+  <p align="center">
+    Projet de gestion d'entrepôt du module de GO d'Epitech.<br>
+  </p>
+</p>
 
 Yet another Epitech project but in [Go](https://never-again.go).
 
