@@ -2,9 +2,8 @@
 package main
 
 import (
-	"bufio"
 	"flag"
-	"os"
+	"fmt"
 	"time"
 
 	"github.com/adrienlucbert/gofeur/config"
@@ -15,40 +14,49 @@ import (
 	"github.com/adrienlucbert/gofeur/ui"
 )
 
-func getFileContent(file string) (*os.File, *bufio.Scanner) {
-	fd, err := os.Open(file)
-	if err != nil {
-		println(err)
-		panic("cannot open file")
-	}
-	fileScanner := bufio.NewScanner(fd)
-	fileScanner.Split(bufio.ScanLines)
-	return fd, fileScanner
+type gofeurError struct {
+	err string
+}
+
+func (err gofeurError) Error() string {
+	return fmt.Sprintf("😱 : %s", err.err)
 }
 
 func main() {
+	defer func() {
+		if err := recover(); err != nil {
+			err := gofeurError{err: fmt.Sprintf("%v", err)}
+
+			println(err.Error())
+		}
+	}()
+
 	filename := flag.String("filename", "", "Map file path")
 	displayUI := flag.Bool("ui", false, "Display UI")
-	logLevel := flag.String("log-level", "Debug", "Log level (Debug, Info, Warn, Error, None)")
+	logLevel := flag.String("log-level", "Info", "Log level (Debug, Info, Warn, Error, None)")
 	flag.Parse()
 
 	config.Set("displayUI", displayUI)
 	logger.SetLogLevel(*logLevel)
 
-	if *filename == "" {
-		panic("missing input file")
+	gofeur, err := parsing.ParseInputFile(*filename)
+	if err != nil {
+		println(gofeurError{err: err.Error()}.Error())
+		return
 	}
-	fd, f := getFileContent(*filename)
-	defer fd.Close()
+	err = parsing.VerifySimulationValidity(gofeur)
+	if err != nil {
+		println(gofeurError{err: err.Error()}.Error())
+		return
+	}
 
-	gofeur := parsing.ParseFile(f)
-	sim := simulation.New(gofeur)
+	sim := simulation.New(&gofeur)
 
 	layers := []pkg.Layer{
 		&simulation.Layer{Simulation: &sim},
 	}
 	if *displayUI {
-		layers = append(layers, &ui.Layer{Gofeur: gofeur, Simulation: &sim})
+		layers = append(layers, &ui.Layer{Gofeur: &gofeur, Simulation: &sim})
 	}
 	for _, layer := range layers {
 		layer.Attach()

@@ -22,6 +22,11 @@ const (
 	Unfinished
 )
 
+type prop interface {
+	Pos() pkg.Vector
+	IsAvailable() bool
+}
+
 // Simulation represents the simulation data
 type Simulation struct {
 	MaxRound  uint
@@ -38,14 +43,14 @@ func (s *Simulation) IsRunning() bool {
 	return s.Status == Running
 }
 
-func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
+func findClosestParcel(parcels []parcel, pos pkg.Vector, maximumWeight uint) *parcel {
 	var closestParcel *parcel
 	var closestParcelDistance float32
 	for i := range parcels {
-		if parcels[i].carried {
+		parcel := &parcels[i]
+		if !parcel.IsAvailable() || parcel.weight > maximumWeight {
 			continue
 		}
-		parcel := &parcels[i]
 		parcelDistance := pos.SquaredDistance(parcel.pos)
 		if closestParcel == nil || parcelDistance < closestParcelDistance {
 			closestParcel = parcel
@@ -55,24 +60,46 @@ func findClosestParcel(parcels []parcel, pos pkg.Vector) *parcel {
 	return closestParcel
 }
 
+// TODO: make truck and parcel implement a common interface to avoid repeating code
+// NOTE: turns out the type-specific filter condition makes it difficult as
+// predicates can't be called with an interface as parameter
+// NOTE: giving `prop` a `isAvailable` method would solve this issue
+// NOTE: turns out it doesn't, at passing []parcel as []prop is impossible
+func findClosestTruck(trucks []truck, pos pkg.Vector, minimumCapacity uint) *truck {
+	var closestTruck *truck
+	var closestTruckDistance float32
+	for i := range trucks {
+		truck := &trucks[i]
+		if !truck.IsAvailable() || truck.capacity-truck.loadEstimate < minimumCapacity {
+			continue
+		}
+		truckDistance := pos.SquaredDistance(truck.pos)
+		if closestTruck == nil || truckDistance < closestTruckDistance {
+			closestTruck = truck
+			closestTruckDistance = truckDistance
+		}
+	}
+	return closestTruck
+}
+
 func (s *Simulation) start() {
 	s.Round = 0
 	s.Status = Running
 }
 
 // New initializes a Simulation object
-func New(gofeur *parsing.Gofeur) Simulation {
+func New(gofeur *parsing.Simulation) Simulation {
 	s := Simulation{}
-	s.MaxRound = gofeur.ST.Rounds
-	s.board = board.New(gofeur.ST.Width, gofeur.ST.Length)
-	for i := range gofeur.SB.Forklifts {
-		s.forklifts = append(s.forklifts, newForkliftFromParsing(&gofeur.SB.Forklifts[i]))
+	s.MaxRound = uint(gofeur.Cycle)
+	s.board = board.New(uint(gofeur.Warehouse.Width), uint(gofeur.Warehouse.Length))
+	for i := range gofeur.Warehouse.Forklifts {
+		s.forklifts = append(s.forklifts, newForkliftFromParsing(&gofeur.Warehouse.Forklifts[i]))
 	}
-	for i := range gofeur.SB.Packs {
-		s.parcels = append(s.parcels, newParcelFromParsing(&gofeur.SB.Packs[i]))
+	for i := range gofeur.Warehouse.Parcels {
+		s.parcels = append(s.parcels, newParcelFromParsing(&gofeur.Warehouse.Parcels[i]))
 	}
-	for i := range gofeur.SB.Trucks {
-		s.trucks = append(s.trucks, newTruckFromParsing(&gofeur.SB.Trucks[i]))
+	for i := range gofeur.Warehouse.Trucks {
+		s.trucks = append(s.trucks, newTruckFromParsing(&gofeur.Warehouse.Trucks[i]))
 	}
 	s.updateBoard()
 	return s
@@ -81,7 +108,7 @@ func New(gofeur *parsing.Gofeur) Simulation {
 func (s *Simulation) updateBoard() {
 	s.board.Clear()
 	for i := range s.parcels {
-		if s.parcels[i].carried {
+		if s.parcels[i].status == Carried || s.parcels[i].status == DroppedOff {
 			continue
 		}
 		s.board.At(uint(s.parcels[i].pos.X), uint(s.parcels[i].pos.Y)).Blocked = true
@@ -96,13 +123,29 @@ func (s *Simulation) updateBoard() {
 		s.board.At(uint(s.forklifts[i].pos.X), uint(s.forklifts[i].pos.Y)).DebugChar = 'L'
 	}
 	for i := range s.trucks {
+		if s.trucks[i].status != Loading {
+			continue
+		}
 		s.board.At(uint(s.trucks[i].pos.X), uint(s.trucks[i].pos.Y)).Blocked = true
 		s.board.At(uint(s.trucks[i].pos.X), uint(s.trucks[i].pos.Y)).DebugChar = 'T'
 	}
 }
 
+func (s *Simulation) areAnyParcelsLeft() bool {
+	for i := range s.parcels {
+		if s.parcels[i].status != DroppedOff {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Simulation) simulateRound() {
-	logger.Debug("Round %d\n", s.Round+1)
+	if !s.areAnyParcelsLeft() {
+		s.Status = Finished
+		return
+	}
+	logger.Info("tour %d\n", s.Round+1)
 	for i := range s.forklifts {
 		s.forklifts[i].simulateRound(s)
 	}
@@ -111,6 +154,7 @@ func (s *Simulation) simulateRound() {
 	}
 	s.updateBoard()
 	logger.Debug("%s\n", s.board.String())
+	logger.Info("\n")
 
 	// Increment round and end simulation if needed
 	s.Round++
@@ -120,4 +164,11 @@ func (s *Simulation) simulateRound() {
 }
 
 func (s *Simulation) terminate() {
+	reaction := map[Status]string{
+		Running:    "😱",
+		Idle:       "😱",
+		Finished:   "😎",
+		Unfinished: "🙂",
+	}[s.Status]
+	logger.Info("%s\n", reaction)
 }

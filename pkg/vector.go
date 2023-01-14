@@ -26,3 +26,9 @@ func (v Vector) Add(rhs Vector) Vector {
 func (v Vector) SquaredDistance(rhs Vector) float32 {
 	return float32(math.Pow(float64(v.X-rhs.X), 2) + math.Pow(float64(v.Y-rhs.Y), 2))
 }
+
+// Distance calculates the distance between 2 vectors. Prefer using
+// SquaredDistance if only the scale matters.
+func (v Vector) Distance(rhs Vector) float32 {
+	return float32(math.Sqrt(math.Pow(float64(v.X-rhs.X), 2) + math.Pow(float64(v.Y-rhs.Y), 2)))
+}

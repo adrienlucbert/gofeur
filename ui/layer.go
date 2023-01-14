@@ -11,7 +11,7 @@ import (
 
 // Layer is an optional application layer responsible for displaying the UI
 type Layer struct {
-	Gofeur     *parsing.Gofeur
+	Gofeur     *parsing.Simulation
 	Simulation *simulation.Simulation
 	ui         *UI
 }
@@ -27,7 +27,7 @@ func (layer *Layer) run() {
 
 // Attach initializes the UILayer
 func (layer *Layer) Attach() {
-	layer.ui = UIStart(layer.Gofeur.ST, layer.Gofeur.SB)
+	layer.ui = Start(layer.Gofeur)
 	go layer.run()
 }
 
@@ -40,18 +40,16 @@ func (layer *Layer) Update(elapsedTime time.Duration) {
 	}
 	if !layer.ui.historic.IsRowSelected {
 		if layer.Simulation.Round == 2 {
-			layer.ui.DumpActionInStateBox(layer.Gofeur.SB.Forklifts[0], "TEST")
+			layer.ui.DumpActionInStateBox(layer.Gofeur.Warehouse.Forklifts[0], "TEST")
 		} else {
-			layer.ui.DumpActionInStateBox(layer.Gofeur.SB.Trucks[0], "WAITING")
+			layer.ui.DumpActionInStateBox(layer.Gofeur.Warehouse.Trucks[0], "WAITING")
 		}
 		layer.ui.OutputBox.SetCell(int(layer.Simulation.Round), 0, tview.NewTableCell(fmt.Sprintf("round %d\n", layer.Simulation.Round)))
 	}
 	layer.ui.App.Draw()
-	// time.Sleep(1 * time.Second) // REMOVE:
 }
 
 // Detach dismounts the UILayer
 func (layer *Layer) Detach() {
-	// time.Sleep(500 * time.Second) // REMOVE:
 	layer.ui.App.Stop()
 }
