@@ -3,6 +3,7 @@ package simulation
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/adrienlucbert/gofeur/logger"
 	"github.com/adrienlucbert/gofeur/optional"
@@ -105,11 +106,10 @@ func (f *forklift) findPathToTarget(simulation *Simulation) error {
 
 func (f *forklift) findClosestParcel(simulation *Simulation) error {
 	// PERF: don't refetch target if not reached
-	if target := findClosestParcel(simulation.parcels, f.pos); target != nil {
+	if target := findClosestParcel(simulation.parcels, f.pos, math.MaxUint); target != nil {
 		target.status = Targeted
 		f.target.Set(target)
 	} else {
-		f.target.Clear()
 		return errParcelNotFound
 	}
 	return f.findPathToTarget(simulation)
@@ -117,13 +117,21 @@ func (f *forklift) findClosestParcel(simulation *Simulation) error {
 
 func (f *forklift) findClosestTruck(simulation *Simulation) error {
 	// PERF: don't refetch target if not reached
-	if target := findClosestTruck(simulation.trucks, f.pos); target != nil {
+	if target := findClosestTruck(simulation.trucks, f.pos, f.parcel.Value().weight); target != nil {
 		f.target.Set(target)
+		f.focusTruck(target)
 	} else {
-		f.target.Clear()
 		return errTruckNotFound
 	}
 	return f.findPathToTarget(simulation)
+}
+
+func (f *forklift) focusTruck(truck *truck) {
+	truck.loadEstimate += f.parcel.Value().weight
+}
+
+func (f *forklift) unfocusTruck(truck *truck) {
+	truck.loadEstimate -= f.parcel.Value().weight
 }
 
 var errForkliftAlreadyLoaded = errors.New("Forklift already loaded")
@@ -144,7 +152,7 @@ func (f *forklift) finishGrabbingParcel() {
 	f.status = Loaded
 }
 
-func (f *forklift) dropParcelFocus() {
+func (f *forklift) unfocusParcel() {
 	f.target.Value().(*parcel).status = StandingBy
 	f.target.Clear()
 	f.path.Clear()
@@ -159,28 +167,30 @@ func (f *forklift) startDroppingParcel() error {
 	if !f.parcel.HasValue() {
 		return errForkliftEmpty
 	}
-	truck := f.target.Value().(*truck)
-	if truck.load+f.parcel.Value().weight > truck.capacity {
-		return errTruckFull
+	if truck, ok := f.target.Value().(*truck); ok {
+		if truck.load+f.parcel.Value().weight > truck.capacity {
+			return errTruckFull
+		}
+		f.status = Dropping
 	}
-	f.status = Dropping
 	return nil
 }
 
 func (f *forklift) finishDroppingParcel() {
-	truck := f.target.Value().(*truck)
-	truck.load += f.parcel.Value().weight
-	f.target.Clear()
-	f.path.Clear()
-	f.parcel.Value().status = DroppedOff
-	f.parcel.Clear()
-	f.status = Empty
+	if truck, ok := f.target.Value().(*truck); ok {
+		truck.load += f.parcel.Value().weight
+		f.target.Clear()
+		f.path.Clear()
+		f.parcel.Value().status = DroppedOff
+		f.parcel.Clear()
+		f.status = Empty
+	}
 }
 
 func (f *forklift) seekParcel(simulation *Simulation) forkliftAction {
 	if !f.target.HasValue() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
 		if f.target.HasValue() {
-			f.dropParcelFocus()
+			f.unfocusParcel()
 		}
 		if err := f.findClosestParcel(simulation); err != nil {
 			logger.Debug("%s\n", err.Error())
@@ -201,6 +211,9 @@ func (f *forklift) seekParcel(simulation *Simulation) forkliftAction {
 
 func (f *forklift) seekTruck(simulation *Simulation) forkliftAction {
 	if !f.target.HasValue() || !f.target.Value().IsAvailable() || simulation.board.At(uint(f.path.Value()[0].X), uint(f.path.Value()[0].Y)).Blocked {
+		if f.target.HasValue() {
+			f.unfocusTruck(f.target.Value().(*truck))
+		}
 		if err := f.findClosestTruck(simulation); err != nil {
 			logger.Debug("%s\n", err.Error())
 			return forkliftWaitAction{}
