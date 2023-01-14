@@ -27,7 +27,7 @@ func (layer *Layer) run() {
 
 // Attach initializes the UILayer
 func (layer *Layer) Attach() {
-	layer.ui = UIStart(layer.Gofeur)
+	layer.ui = Start(layer.Gofeur)
 	go layer.run()
 }
 
@@ -47,11 +47,9 @@ func (layer *Layer) Update(elapsedTime time.Duration) {
 		layer.ui.OutputBox.SetCell(int(layer.Simulation.Round), 0, tview.NewTableCell(fmt.Sprintf("round %d\n", layer.Simulation.Round)))
 	}
 	layer.ui.App.Draw()
-	// time.Sleep(1 * time.Second) // REMOVE:
 }
 
 // Detach dismounts the UILayer
 func (layer *Layer) Detach() {
-	// time.Sleep(500 * time.Second) // REMOVE:
 	layer.ui.App.Stop()
 }
